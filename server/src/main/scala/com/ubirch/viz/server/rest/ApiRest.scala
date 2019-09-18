@@ -10,7 +10,7 @@ import org.scalatra.{CorsSupport, ScalatraServlet}
 
 
 class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
-  with NativeJsonSupport with SwaggerSupport with CorsSupport with LazyLogging with AuthenticationSupport {
+  with NativeJsonSupport with SwaggerSupport with CorsSupport with LazyLogging {
 
   // Allows CORS support to display the swagger UI when using the same network
   options("/*") {
