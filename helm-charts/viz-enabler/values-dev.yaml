@@ -37,3 +37,10 @@ ingress:
 
 imagePullSecrets:
 - name: trackleregistrykey-trackle-service
+
+
+elasticsearch:
+  protocol: "https"
+  host: ""
+  port: "9200"
+

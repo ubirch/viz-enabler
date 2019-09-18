@@ -19,3 +19,9 @@ webuiapi:
       environment: "aValue"
   app:
     version: "aValue"
+
+elasticsearch:
+  protocol: "https"
+  host: ""
+  port: "9200"
+

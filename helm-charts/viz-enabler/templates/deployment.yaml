@@ -56,6 +56,22 @@ spec:
                         value: {{ .Values.webuiapi.server.swaggerPath | quote }}
                       - name: API_ENV_APP_VERSION
                         value: {{ .Values.webuiapi.app.version | quote }}
+                      - name: VIZ_ENABLER_ENV_METRICS_ES_PROTOCOL
+                        value: "{{ .Values.elasticsearch.protocol }}"
+                      - name: VIZ_ENABLER_ENV_METRICS_ES_HOST
+                        value: "{{ .Values.elasticsearch.host }}"
+                      - name: VIZ_ENABLER_ENV_METRICS_ES_PORT
+                        value: "{{ .Values.elasticsearch.port }}"
+                      - name: VIZ_ENABLER_ENV_METRICS_ES_IO_USER
+                        valueFrom:
+                          secretKeyRef:
+                            name: "elastico-secrets"
+                            key: "ELASTIC_IO_USER"
+                      - name: VIZ_ENABLER_ENV_METRICS_ES_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: "elastico-secrets"
+                            key: " ELASTIC_IO_PASSWORD"
             dnsPolicy: ClusterFirst
             restartPolicy: Always
             terminationGracePeriodSeconds: 30
