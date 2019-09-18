@@ -3,14 +3,13 @@ package com.ubirch.viz.core.elastic
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
 import akka.stream.alpakka.elasticsearch.scaladsl.ElasticsearchFlow
-import akka.stream.alpakka.elasticsearch.{ElasticsearchSourceSettings, ElasticsearchWriteSettings, WriteMessage}
+import akka.stream.alpakka.elasticsearch.{ElasticsearchSourceSettings, ElasticsearchWriteSettings, MessageWriter, WriteMessage}
 import akka.stream.scaladsl.{Sink, Source}
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.config.ConfigBase
 import org.apache.http.HttpHost
 import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
 import org.apache.http.impl.client.BasicCredentialsProvider
-import org.apache.http.impl.io.AbstractMessageWriter
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
 import org.elasticsearch.client.RestClient
 
@@ -56,7 +55,7 @@ object EsClient extends LazyLogging with ConfigBase {
         indexName = index,
         typeName = "_doc",
         ElasticsearchWriteSettings.Default,
-        AbstractMessageWriter[String]
+        new StupidWriter()
       )
     ).runWith(Sink.seq)
       .onComplete {
@@ -65,6 +64,10 @@ object EsClient extends LazyLogging with ConfigBase {
         case Failure(ex) =>
           logger.error(s"error while writing $jsonData to elasticsearch: ", ex)
       }
+  }
+
+  private final class StupidWriter extends MessageWriter[String] {
+    override def convert(message: String): String = message
   }
 
 
