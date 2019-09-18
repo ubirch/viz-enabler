@@ -1,6 +1,7 @@
 package com.ubirch.viz.server.rest
 
 import com.typesafe.scalalogging.LazyLogging
+import com.ubirch.viz.core.elastic.EsClient
 //import com.ubirch.viz.core.elastic.EsClient
 import com.ubirch.viz.server.authentification.{AuthenticateDevice, AuthenticationSupport}
 import org.json4s.{DefaultFormats, Formats}
@@ -47,7 +48,7 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   post("/", operation(postData)) {
     if (!AuthenticateDevice.sendAuth(request)) halt(401)
     val UPP = request.body
-    //EsClient.storeDeviceData(UPP)
+    EsClient.storeDeviceData(UPP)
   }
 
 }

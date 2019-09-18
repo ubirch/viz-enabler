@@ -53,9 +53,9 @@ object EsClient extends LazyLogging with ConfigBase {
     ).via(
       ElasticsearchFlow.create(
         indexName = index,
-        typeName = "_doc",
+        typeName = "doc",
         ElasticsearchWriteSettings.Default,
-        new StupidWriter()
+        new StupidWriter
       )
     ).runWith(Sink.seq)
       .onComplete {
