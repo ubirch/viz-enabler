@@ -27,6 +27,7 @@
         <scalatest-maven-plugin.version>1.0</scalatest-maven-plugin.version>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
         <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
+        <dockerfile-maven-plugin.version>1.4.4</dockerfile-maven-plugin.version>
         <!-- plugins -->
 
         <!-- versions -->
@@ -107,6 +108,37 @@
                     <skip>true</skip>
                 </configuration>
             </plugin>
+
+            <!-- create and/or push the created docker image -->
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>${dockerfile-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <buildDirectory>${project.build.outputDirectory}</buildDirectory>
+                    <repository>ubirch/viz-enabler-${project.artifactId}</repository>
+                    <tag>${build.number}</tag>
+                    <tag>latest</tag>
+                    <buildArgs>
+                        <VERSION>${project.version}</VERSION>
+                        <BUILD>${build.number}</BUILD>
+                        <SERVICE_NAME>${project.name}</SERVICE_NAME>
+                        <JAR_LIBS>target/lib</JAR_LIBS>
+                        <SWAGGER_UI>src/main/swagger-ui</SWAGGER_UI>
+                        <JAR_FILE>target/${project.build.finalName}.${project.packaging}</JAR_FILE>
+                    </buildArgs>
+                </configuration>
+            </plugin>
+
 
         </plugins>
     </build>

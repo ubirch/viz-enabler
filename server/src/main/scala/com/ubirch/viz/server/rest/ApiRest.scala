@@ -32,7 +32,7 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   val postData: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[String]("sendData")
       summary "Send data to ES"
-      schemes ("http", "https") // Force swagger ui to use http instead of https, only need to say it once TODO: change on prod !!
+      schemes ("http", "https") // Force swagger ui to use http OR https, only need to say it once
       description "Send a UPP that will be stored to ES"
       tags "send"
       parameters bodyParam[String]("UPP").
