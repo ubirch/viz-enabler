@@ -1,0 +1,15 @@
+*.class
+*.log
+target
+.idea
+project/project
+project/target
+*.iml
+**/node_modules/
+**/package-lock.json
+IMPORT_DONE
+
+.ivy2
+/cache/
+/dump.rdb
+
