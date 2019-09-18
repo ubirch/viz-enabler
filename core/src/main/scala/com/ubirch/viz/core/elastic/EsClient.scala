@@ -18,7 +18,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
 
-class EsClient extends LazyLogging with ConfigBase {
+object EsClient extends LazyLogging with ConfigBase {
 
   val credentialsProvider = new BasicCredentialsProvider
   credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password))
