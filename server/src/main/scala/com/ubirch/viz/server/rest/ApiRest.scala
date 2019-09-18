@@ -2,8 +2,7 @@ package com.ubirch.viz.server.rest
 
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.elastic.EsClient
-//import com.ubirch.viz.core.elastic.EsClient
-import com.ubirch.viz.server.authentification.{AuthenticateDevice, AuthenticationSupport}
+import com.ubirch.viz.server.authentification.AuthenticateDevice
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}

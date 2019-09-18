@@ -18,13 +18,4 @@ object AuthenticateDevice {
     res.code == 200
   }
 
-  def verifyUpp(data: String): Unit = {
-
-  }
-
-//  def verifyUpp(data: String): Boolean = {
-//    val verifier = new DefaultProtocolVerifier(new UbirchKeyService("key service url goes here"))
-//    verifier.verify(data.getBytes)
-//  }
-
 }
