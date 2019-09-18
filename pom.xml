@@ -84,7 +84,6 @@
         <!-- Json -->
         <json4s.version>3.6.7</json4s.version> <!-- Scalatra DOES NOT work with a json4s prior to 3.6.7 -->
 
-
         <!-- Logging -->
         <scala.logging.version>3.9.0</scala.logging.version>
         <scala-logging.version>3.9.2</scala-logging.version>
@@ -127,6 +126,7 @@
         </dependency>
 
         <!-- Scala -->
+
 
         <!-- Logging -->
         <dependency>
