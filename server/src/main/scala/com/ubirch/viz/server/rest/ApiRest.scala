@@ -8,7 +8,6 @@ import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
 import org.scalatra.{CorsSupport, ScalatraServlet}
 
-
 class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   with NativeJsonSupport with SwaggerSupport with CorsSupport with LazyLogging {
 
@@ -37,12 +36,13 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
       description "Send a UPP that will be stored to ES"
       tags "send"
       parameters (
-      bodyParam[String]("UPP").
-      description("name of thing"),
-      headerParam[String]("X-Ubirch-Hardware-Id").
+        bodyParam[String]("UPP").
+        description("name of thing"),
+        headerParam[String]("X-Ubirch-Hardware-Id").
         description("HardwareId of the device"),
-      headerParam[String]("X-Ubirch-Credential").
-        description("password of the device")))
+        headerParam[String]("X-Ubirch-Credential").
+        description("password of the device")
+      ))
 
   post("/", operation(postData)) {
     if (!AuthenticateDevice.sendAuth(request)) halt(401)

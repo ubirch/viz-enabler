@@ -10,7 +10,7 @@ redis:
   masterURL: "redis-master:6379"
   slaveURL: "redis-slave:6379"
 
-webuiapi:
+vizenabler:
   server:
     port: 0
     baseUrl: "aValue"

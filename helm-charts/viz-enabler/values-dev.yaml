@@ -3,7 +3,7 @@ image:
   tag: latest # set to your local image tag if needed
 
 # settings for ingest
-webuiapi:
+vizenabler:
   noHost: true
   kafkaURL: "kafka.core-dev:9092"
   server:
@@ -15,10 +15,6 @@ webuiapi:
   app:
     version: "v1"
 
-redis:
-  masterURL: "redis-stable-master.core-dev:6379"
-  slaveURL: "redis-stable-slave.core-dev:6379"
-
 
 ingress:
   enabled: true
@@ -29,11 +25,11 @@ ingress:
     kubernetes.io/ingress.allow-http: "false"
   path: /
   hosts:
-    - api.console.dev.ubirch.com
+    - data.dev.ubirch.com
   tls:
-    - secretName: api-console-dev-ubirch-com-certificate
+    - secretName: data-dev-ubirch-com-certificate
       hosts:
-        - api.console.dev.ubirch.com
+        - data.console.dev.ubirch.com
 
 imagePullSecrets:
 - name: trackleregistrykey-trackle-service
@@ -41,6 +37,6 @@ imagePullSecrets:
 
 elasticsearch:
   protocol: "https"
-  host: ""
-  port: "9200"
+  host: "86ed92c1fba6eca897ea2d07f63b0979.eu-west-1.aws.found.io"
+  port: "9343"
 

@@ -37,7 +37,6 @@ object EsClient extends LazyLogging with ConfigBase {
     .withBufferSize(10000)
     .withScrollDuration(1.minutes)
 
-
   /**
     * This method is executing a scroll search on the elasticsearch.
     *
@@ -48,16 +47,16 @@ object EsClient extends LazyLogging with ConfigBase {
 
     Source(
       collection.immutable.Seq(
-        WriteMessage.createIndexMessage(jsonData),
+        WriteMessage.createIndexMessage(jsonData)
       )
     ).via(
-      ElasticsearchFlow.create(
-        indexName = index,
-        typeName = "doc",
-        ElasticsearchWriteSettings.Default,
-        new StupidWriter
-      )
-    ).runWith(Sink.seq)
+        ElasticsearchFlow.create(
+          indexName = index,
+          typeName = "doc",
+          ElasticsearchWriteSettings.Default,
+          new StupidWriter
+        )
+      ).runWith(Sink.seq)
       .onComplete {
         case Success(_) =>
           logger.info(s"successfully writing $jsonData to elasticsearch.")
@@ -69,6 +68,5 @@ object EsClient extends LazyLogging with ConfigBase {
   private final class StupidWriter extends MessageWriter[String] {
     override def convert(message: String): String = message
   }
-
 
 }

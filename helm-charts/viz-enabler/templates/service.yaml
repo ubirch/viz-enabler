@@ -11,7 +11,7 @@ spec:
     type: ClusterIP
     ports:
         - name: http
-          port: {{ .Values.webuiapi.server.port }}
+          port: {{ .Values.vizenabler.server.port }}
           protocol: TCP
         - name: jmx
           port: 9010

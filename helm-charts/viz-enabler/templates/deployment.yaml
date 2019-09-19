@@ -25,7 +25,7 @@ spec:
                   image: "ubirch/viz-enabler-server:{{ .Values.image.tag | default "latest" }}"
                   imagePullPolicy: Always
                   ports:
-                      - containerPort: {{ .Values.webuiapi.server.port }}
+                      - containerPort: {{ .Values.vizenabler.server.port }}
                       - containerPort: 9010
                   resources:
                       requests:
@@ -47,15 +47,15 @@ spec:
                   env:
 
                       - name: API_ENV_SERV_PORT
-                        value: {{ .Values.webuiapi.server.port | quote }}
+                        value: {{ .Values.vizenabler.server.port | quote }}
                       - name: API_ENV_SERV_URL
-                        value: {{ .Values.webuiapi.server.baseUrl | quote }}
+                        value: {{ .Values.vizenabler.server.baseUrl | quote }}
                       - name: API_ENV_SERV_SCALATRA_ENV
-                        value: {{ .Values.webuiapi.server.scalatra.environment | quote }}
+                        value: {{ .Values.vizenabler.server.scalatra.environment | quote }}
                       - name: API_ENV_SERV_SWAGGERPATH
-                        value: {{ .Values.webuiapi.server.swaggerPath | quote }}
+                        value: {{ .Values.vizenabler.server.swaggerPath | quote }}
                       - name: API_ENV_APP_VERSION
-                        value: {{ .Values.webuiapi.app.version | quote }}
+                        value: {{ .Values.vizenabler.app.version | quote }}
                       - name: VIZ_ENABLER_ENV_METRICS_ES_PROTOCOL
                         value: "{{ .Values.elasticsearch.protocol }}"
                       - name: VIZ_ENABLER_ENV_METRICS_ES_HOST
@@ -65,13 +65,13 @@ spec:
                       - name: VIZ_ENABLER_ENV_METRICS_ES_IO_USER
                         valueFrom:
                           secretKeyRef:
-                            name: "elastico-secrets"
+                            name: "elastico-secrets-avatar"
                             key: "ELASTIC_IO_USER"
                       - name: VIZ_ENABLER_ENV_METRICS_ES_PASSWORD
                         valueFrom:
                           secretKeyRef:
-                            name: "elastico-secrets"
-                            key: " ELASTIC_IO_PASSWORD"
+                            name: "elastico-secrets-avatar"
+                            key: "ELASTIC_IO_PASSWORD"
             dnsPolicy: ClusterFirst
             restartPolicy: Always
             terminationGracePeriodSeconds: 30
