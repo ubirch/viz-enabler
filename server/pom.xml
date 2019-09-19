@@ -109,7 +109,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.ubirch.id.scalatra.Boot</mainClass>
+                            <mainClass>com.ubirch.viz.server.Boot</mainClass>
                             <useUniqueVersions>false</useUniqueVersions>
                         </manifest>
                     </archive>

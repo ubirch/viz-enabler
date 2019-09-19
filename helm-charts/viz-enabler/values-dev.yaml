@@ -1,5 +1,5 @@
 image:
-  repository: ubirch/web-admin-api-server
+  repository: ubirch/viz-enabler-server
   tag: latest # set to your local image tag if needed
 
 # settings for ingest
@@ -29,7 +29,7 @@ ingress:
   tls:
     - secretName: data-dev-ubirch-com-certificate
       hosts:
-        - data.console.dev.ubirch.com
+        - data.dev.ubirch.com
 
 imagePullSecrets:
 - name: trackleregistrykey-trackle-service
