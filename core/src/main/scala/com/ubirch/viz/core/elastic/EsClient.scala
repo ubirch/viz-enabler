@@ -21,6 +21,7 @@ object EsClient extends LazyLogging with ConfigBase {
 
   val credentialsProvider = new BasicCredentialsProvider
   credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password))
+  logger.info(password)
 
   protected lazy implicit val client: RestClient = if (protocol.contains("https")) {
     RestClient.builder(new HttpHost(host, port, protocol))
