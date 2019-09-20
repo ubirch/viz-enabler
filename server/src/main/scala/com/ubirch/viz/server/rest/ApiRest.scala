@@ -4,9 +4,9 @@ import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.elastic.EsClient
 import com.ubirch.viz.server.authentification.AuthenticateDevice
 import org.json4s.{DefaultFormats, Formats}
+import org.scalatra.{CorsSupport, ScalatraServlet}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
-import org.scalatra.{CorsSupport, ScalatraServlet}
 
 class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   with NativeJsonSupport with SwaggerSupport with CorsSupport with LazyLogging {
@@ -45,7 +45,7 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
       ))
 
   post("/", operation(postData)) {
-    if (!AuthenticateDevice.sendAuth(request)) halt(401)
+    if (!AuthenticateDevice.isAuthorized(request)) halt(401)
     val UPP = request.body
     EsClient.storeDeviceData(UPP)
   }

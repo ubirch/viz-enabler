@@ -12,6 +12,9 @@ vizenabler:
     swaggerPath: "/usr/share/service/swagger"
     scalatra:
       environment: "deployment"
+  ubirch:
+    authentication:
+      endpoint: "https://api.console.dev.ubirch.com/ubirch-web-ui/api/v1/auth"
   app:
     version: "v1"
 
@@ -35,8 +38,9 @@ imagePullSecrets:
 - name: trackleregistrykey-trackle-service
 
 
+
 elasticsearch:
   protocol: "https"
   host: "86ed92c1fba6eca897ea2d07f63b0979.eu-west-1.aws.found.io"
-  port: "9343"
+  port: "9243"
 

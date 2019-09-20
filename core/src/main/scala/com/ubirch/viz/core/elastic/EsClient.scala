@@ -2,8 +2,8 @@ package com.ubirch.viz.core.elastic
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.alpakka.elasticsearch.scaladsl.ElasticsearchFlow
 import akka.stream.alpakka.elasticsearch.{ElasticsearchSourceSettings, ElasticsearchWriteSettings, MessageWriter, WriteMessage}
+import akka.stream.alpakka.elasticsearch.scaladsl.ElasticsearchFlow
 import akka.stream.scaladsl.{Sink, Source}
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.config.ConfigBase
@@ -21,7 +21,6 @@ object EsClient extends LazyLogging with ConfigBase {
 
   val credentialsProvider = new BasicCredentialsProvider
   credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(username, password))
-  logger.info(password)
 
   protected lazy implicit val client: RestClient = if (protocol.contains("https")) {
     RestClient.builder(new HttpHost(host, port, protocol))

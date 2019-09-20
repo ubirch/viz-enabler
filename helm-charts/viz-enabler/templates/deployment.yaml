@@ -62,6 +62,8 @@ spec:
                         value: "{{ .Values.elasticsearch.host }}"
                       - name: VIZ_ENABLER_ENV_METRICS_ES_PORT
                         value: "{{ .Values.elasticsearch.port }}"
+                      - name: VIZ_ENABLER_ENV_UBIRCH_AUTH_URL
+                            - "{{ .Values.vizenabler.ubirch.authentication.endpoint }}"
                       - name: VIZ_ENABLER_ENV_METRICS_ES_IO_USER
                         valueFrom:
                           secretKeyRef:

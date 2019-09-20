@@ -1,22 +1,32 @@
 package com.ubirch.viz.server.authentification
 
 import com.ubirch.viz.server.Models.Elements
+import com.ubirch.viz.server.config.ConfigBase
 import javax.servlet.http.HttpServletRequest
+import scalaj.http
 import scalaj.http.Http
 
-object AuthenticateDevice {
+object AuthenticateDevice extends ConfigBase {
 
-  def sendAuth(req: HttpServletRequest): Boolean = {
-    val id = req.getHeader(Elements.ID_HEADER)
-    val pwd = req.getHeader(Elements.PWD_HEADER)
+  def isAuthorized(incomingRequest: HttpServletRequest): Boolean = {
+    val authenticationResponse = sendRequestAndGetAuthorizationResponse(incomingRequest)
+    isAuthorisationCodeCorrect(authenticationResponse)
+  }
 
-    val header = Seq(
-      (Elements.ID_HEADER, id),
-      (Elements.PWD_HEADER, pwd)
+  def sendRequestAndGetAuthorizationResponse(incomingRequest: HttpServletRequest): http.HttpResponse[String] = {
+    val authenticationRequestHeaders = createHeaders(incomingRequest)
+    Http(ubirchAuthenticationEndpointUrl).headers(authenticationRequestHeaders).asString
+  }
+
+  def createHeaders(request: HttpServletRequest): Seq[(String, String)] = {
+    Seq(
+      (Elements.UBIRCH_ID_HEADER, request.getHeader(Elements.UBIRCH_ID_HEADER)),
+      (Elements.UBIRCH_PASSWORD_HEADER, request.getHeader(Elements.UBIRCH_PASSWORD_HEADER))
     )
+  }
 
-    val res = Http("https://api.console.dev.ubirch.com/ubirch-web-ui/api/v1/auth").headers(header).asString
-    res.code == 200
+  def isAuthorisationCodeCorrect(authenticationResponse: http.HttpResponse[String]): Boolean = {
+    authenticationResponse.code.equals(Elements.AUTHORIZATION_SUCCESS_CODE)
   }
 
 }

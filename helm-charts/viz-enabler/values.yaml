@@ -17,6 +17,9 @@ vizenabler:
     swaggerPath: "aValue"
     scalatra:
       environment: "aValue"
+  ubirch:
+    authentication:
+      endpoint: "https://api.console.dev.ubirch.com/ubirch-web-ui/api/v1/auth"
   app:
     version: "aValue"
 

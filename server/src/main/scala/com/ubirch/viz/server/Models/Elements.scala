@@ -6,6 +6,7 @@ case class Device(
 )
 
 object Elements {
-  val ID_HEADER = "X-Ubirch-Hardware-Id"
-  val PWD_HEADER = "X-Ubirch-Credential"
+  val UBIRCH_ID_HEADER = "X-Ubirch-Hardware-Id"
+  val UBIRCH_PASSWORD_HEADER = "X-Ubirch-Credential"
+  val AUTHORIZATION_SUCCESS_CODE = 200
 }
