@@ -19,7 +19,7 @@ vizenabler:
       environment: "aValue"
   ubirch:
     authentication:
-      endpoint: "https://api.console.dev.ubirch.com/ubirch-web-ui/api/v1/auth"
+      endpoint: "aValue"
   app:
     version: "aValue"
 

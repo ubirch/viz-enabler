@@ -9,4 +9,5 @@ object Elements {
   val UBIRCH_ID_HEADER = "X-Ubirch-Hardware-Id"
   val UBIRCH_PASSWORD_HEADER = "X-Ubirch-Credential"
   val AUTHORIZATION_SUCCESS_CODE = 200
+  val AUTHORIZATION_FAIL_CODE = 401
 }

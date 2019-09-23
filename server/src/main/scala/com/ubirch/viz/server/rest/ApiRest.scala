@@ -2,7 +2,8 @@ package com.ubirch.viz.server.rest
 
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.elastic.EsClient
-import com.ubirch.viz.server.authentification.AuthenticateDevice
+import com.ubirch.viz.server.authentification.DeviceMessage
+import com.ubirch.viz.server.Models.Elements
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{CorsSupport, ScalatraServlet}
 import org.scalatra.json.NativeJsonSupport
@@ -13,9 +14,8 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
 
   // Allows CORS support to display the swagger UI when using the same network
   options("/*") {
-    response.setHeader(
-      "Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers")
-    )
+    response.setHeader("Access-Control-Allow-Methods", "POST, GET, DELETE, OPTIONS, PUT")
+    response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"))
   }
 
   // Stops the APIJanusController from being abstract
@@ -45,9 +45,18 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
       ))
 
   post("/", operation(postData)) {
-    if (!AuthenticateDevice.isAuthorized(request)) halt(401)
-    val UPP = request.body
-    EsClient.storeDeviceData(UPP)
+    val deviceMessage = new DeviceMessage(getDeviceMessage)
+    stopIfDeviceNotAuthorized(deviceMessage)
+    val messageToStore = deviceMessage.enrichMessage
+    EsClient.storeDeviceData(messageToStore)
+  }
+
+  def stopIfDeviceNotAuthorized(deviceMessage: DeviceMessage): Unit = {
+    if (!deviceMessage.isUserAuthorized(request)) halt(Elements.AUTHORIZATION_FAIL_CODE)
+  }
+
+  def getDeviceMessage: String = {
+    request.body
   }
 
 }
