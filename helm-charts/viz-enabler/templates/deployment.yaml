@@ -21,7 +21,7 @@ spec:
                 release: {{ .Release.Name }}
         spec:
             containers:
-                - name: discovery-srv
+                - name: viz-enabler
                   image: "ubirch/viz-enabler-server:{{ .Values.image.tag | default "latest" }}"
                   imagePullPolicy: Always
                   ports:

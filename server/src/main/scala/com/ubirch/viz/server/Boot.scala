@@ -2,35 +2,20 @@ package com.ubirch.viz.server
 
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.server.config.ConfigBase
-import org.eclipse.jetty.server.Server
+import com.ubirch.viz.server.models.Elements
+import org.eclipse.jetty.server.{Handler, Server}
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
 import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.webapp.WebAppContext
 import org.scalatra.servlet.ScalatraListener
 
 object Boot extends ConfigBase with LazyLogging {
+
+  val contextPathBase: String = serverBaseUrl + "/" + appVersion
+
   def main(args: Array[String]) {
 
-    val server = new Server(serverPort)
-
-    val baseUrl = serverBaseUrl
-    val version = "/" + appVersion
-
-    // context for main scalatra rest API
-    val context: WebAppContext = new WebAppContext()
-    context.setContextPath(baseUrl + version)
-    context.setResourceBase("src/main/scala")
-    context.addEventListener(new ScalatraListener)
-    context.addServlet(classOf[DefaultServlet], "/")
-
-    // context for swagger-ui
-    val context2 = new WebAppContext()
-    context2.setContextPath(baseUrl + version + "/docs")
-    context2.setResourceBase(swaggerPath)
-
-    val contexts = new ContextHandlerCollection()
-    contexts.setHandlers(Array(context, context2))
-    server.setHandler(contexts)
+    val server = initializeServer
 
     try {
       server.start()
@@ -38,8 +23,47 @@ object Boot extends ConfigBase with LazyLogging {
     } catch {
       case e: Exception =>
         logger.error(e.getMessage)
-        System.exit(-1)
+        System.exit(Elements.EXIT_ERROR_CODE)
     }
 
+  }
+
+  private def initializeServer: Server = {
+    val server = createServer
+    val contexts = createContextsOfTheServer
+    server.setHandler(contexts)
+    server
+  }
+
+  private def createServer = {
+    new Server(serverPort)
+  }
+
+  private def createContextsOfTheServer = {
+    val contextRestApi: WebAppContext = createContextRestApi
+    val contextSwaggerUi: WebAppContext = createContextSwaggerUi
+    initialiseContextHandlerCollection(Array(contextRestApi, contextSwaggerUi))
+  }
+
+  private def initialiseContextHandlerCollection(contexts: Array[Handler]): ContextHandlerCollection = {
+    val contextCollection = new ContextHandlerCollection()
+    contextCollection.setHandlers(contexts)
+    contextCollection
+  }
+
+  private def createContextRestApi: WebAppContext = {
+    val contextRestApi = new WebAppContext()
+    contextRestApi.setContextPath(contextPathBase)
+    contextRestApi.setResourceBase("src/main/scala")
+    contextRestApi.addEventListener(new ScalatraListener)
+    contextRestApi.addServlet(classOf[DefaultServlet], "/")
+    contextRestApi
+  }
+
+  private def createContextSwaggerUi: WebAppContext = {
+    val contextSwaggerUi = new WebAppContext()
+    contextSwaggerUi.setContextPath(contextPathBase + "/docs")
+    contextSwaggerUi.setResourceBase(swaggerPath)
+    contextSwaggerUi
   }
 }

@@ -2,8 +2,8 @@ package com.ubirch.viz.server.rest
 
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.elastic.EsClient
-import com.ubirch.viz.server.authentification.DeviceMessage
-import com.ubirch.viz.server.Models.Elements
+import com.ubirch.viz.server.authentification.Authenticate
+import com.ubirch.viz.server.models.{Device, Elements}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.{CorsSupport, ScalatraServlet}
 import org.scalatra.json.NativeJsonSupport
@@ -29,30 +29,55 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
     contentType = formats("json")
   }
 
-  val postData: SwaggerSupportSyntax.OperationBuilder =
-    (apiOperation[String]("sendData")
-      summary "Send data to ES"
+  val postDataJson: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[String]("sendJson")
+      summary "Send json to ES"
       schemes ("http", "https") // Force swagger ui to use http OR https, only need to say it once
-      description "Send a UPP that will be stored to ES"
+      description "Send a JSON message that will be stored to ES"
       tags "send"
       parameters (
-        bodyParam[String]("UPP").
-        description("name of thing"),
+        bodyParam[String]("payload").
+        description("Payload to be stored, jsonFormat"),
         headerParam[String]("X-Ubirch-Hardware-Id").
         description("HardwareId of the device"),
         headerParam[String]("X-Ubirch-Credential").
-        description("password of the device")
+        description("Password of the device")
       ))
 
-  post("/", operation(postData)) {
-    val deviceMessage = new DeviceMessage(getDeviceMessage)
-    stopIfDeviceNotAuthorized(deviceMessage)
-    val messageToStore = deviceMessage.enrichMessage
+  post("/json", operation(postDataJson)) {
+    logger.info("post(/json)")
+    logger.info(s"message: $getDeviceMessage")
+    val device = new Device(getDeviceMessage)
+    stopIfDeviceNotAuthorized(device)
+    val messageToStore = device.enrichMessageJson
     EsClient.storeDeviceData(messageToStore)
   }
 
-  def stopIfDeviceNotAuthorized(deviceMessage: DeviceMessage): Unit = {
-    if (!deviceMessage.isUserAuthorized(request)) halt(Elements.AUTHORIZATION_FAIL_CODE)
+  val postDataMsgPack: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[String]("sendMsgPack")
+      summary "Send msgPack to ES"
+      description "Send a msgPack that will be stored to ES"
+      tags "send"
+      parameters (
+        bodyParam[String]("payload").
+        description("Payload to be stored, msgpack format"),
+        headerParam[String]("X-Ubirch-Hardware-Id").
+        description("HardwareId of the device"),
+        headerParam[String]("X-Ubirch-Credential").
+        description("Password of the device")
+      ))
+
+  post("/msgPack", operation(postDataMsgPack)) {
+    logger.info("post(/msgPack)")
+    logger.info(s"message: $getDeviceMessage")
+    val device = new Device(getDeviceMessage)
+    stopIfDeviceNotAuthorized(device)
+    val messageToStore = device.enrichMessagePack
+    EsClient.storeDeviceData(messageToStore)
+  }
+
+  def stopIfDeviceNotAuthorized(deviceMessage: Device): Unit = {
+    if (!Authenticate.isUserAuthorized(request)) halt(status = Elements.AUTHORIZATION_FAIL_CODE)
   }
 
   def getDeviceMessage: String = {
@@ -60,4 +85,3 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   }
 
 }
-

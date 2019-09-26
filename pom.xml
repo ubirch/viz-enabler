@@ -101,6 +101,8 @@
         <maven-dependency-plugin.version>2.8</maven-dependency-plugin.version>
         <scalariform.version>0.2.2</scalariform.version>
         <!-- /plugins -->
+        <msgpack-scala_2.12.version>0.8.13</msgpack-scala_2.12.version>
+        <ubirch-crypto.version>2.1.0</ubirch-crypto.version>
     </properties>
 
 
@@ -197,6 +199,21 @@
             <artifactId>json4s-jackson_${scala.compat.version}</artifactId>
             <version>${json4s.version}</version>
         </dependency>
+
+        <!-- msgPack -->
+        <dependency>
+            <groupId>org.msgpack</groupId>
+            <artifactId>msgpack-scala_${scala.compat.version}</artifactId>
+            <version>${msgpack-scala_2.12.version}</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.ubirch/ubirch-crypto -->
+        <dependency>
+            <groupId>com.ubirch</groupId>
+            <artifactId>ubirch-crypto</artifactId>
+            <version>${ubirch-crypto.version}</version>
+        </dependency>
+
 
         <!-- Test -->
         <dependency>

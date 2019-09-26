@@ -44,6 +44,23 @@
     <orderEntry type="library" name="Maven: org.json4s:json4s-scalap_2.12:3.6.7" level="project" />
     <orderEntry type="library" name="Maven: com.thoughtworks.paranamer:paranamer:2.8" level="project" />
     <orderEntry type="library" name="Maven: org.json4s:json4s-jackson_2.12:3.6.7" level="project" />
+    <orderEntry type="library" name="Maven: org.msgpack:msgpack-scala_2.12:0.8.13" level="project" />
+    <orderEntry type="library" name="Maven: org.msgpack:msgpack-core:0.8.13" level="project" />
+    <orderEntry type="library" name="Maven: com.ubirch:ubirch-crypto:2.1.0" level="project" />
+    <orderEntry type="library" name="Maven: org.bouncycastle:bcprov-jdk15on:1.61" level="project" />
+    <orderEntry type="library" name="Maven: org.bouncycastle:bcpkix-jdk15on:1.61" level="project" />
+    <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.11" level="project" />
+    <orderEntry type="library" name="Maven: org.junit.jupiter:junit-jupiter-api:5.4.0" level="project" />
+    <orderEntry type="library" name="Maven: org.apiguardian:apiguardian-api:1.0.0" level="project" />
+    <orderEntry type="library" name="Maven: org.opentest4j:opentest4j:1.1.1" level="project" />
+    <orderEntry type="library" name="Maven: org.junit.platform:junit-platform-commons:1.4.0" level="project" />
+    <orderEntry type="library" name="Maven: org.junit.jupiter:junit-jupiter-engine:5.2.0" level="project" />
+    <orderEntry type="library" name="Maven: org.junit.platform:junit-platform-engine:1.2.0" level="project" />
+    <orderEntry type="library" name="Maven: org.junit.platform:junit-platform-surefire-provider:1.2.0-M1" level="project" />
+    <orderEntry type="library" name="Maven: org.junit.platform:junit-platform-launcher:1.2.0-M1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.maven.surefire:surefire-api:2.21.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.maven.surefire:surefire-logger-api:2.21.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Maven: org.apache.maven.surefire:common-java5:2.21.0" level="project" />
     <orderEntry type="library" name="Maven: org.scalatra:scalatra-scalatest_2.12:2.6.5" level="project" />
     <orderEntry type="library" name="Maven: org.scalatra:scalatra-test_2.12:2.6.5" level="project" />
     <orderEntry type="library" name="Maven: org.eclipse.jetty:jetty-webapp:9.4.6.v20170531" level="project" />
@@ -61,7 +78,6 @@
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpclient:4.5.3" level="project" />
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpcore:4.4.6" level="project" />
     <orderEntry type="library" name="Maven: commons-logging:commons-logging:1.2" level="project" />
-    <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.9" level="project" />
     <orderEntry type="library" name="Maven: org.apache.httpcomponents:httpmime:4.5.3" level="project" />
     <orderEntry type="library" name="Maven: org.scalatest:scalatest_2.12:3.0.3" level="project" />
     <orderEntry type="library" name="Maven: junit:junit:4.12" level="project" />

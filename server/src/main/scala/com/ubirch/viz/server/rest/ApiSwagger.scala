@@ -16,8 +16,8 @@ class ResourcesApp(implicit val swagger: Swagger) extends ScalatraServlet with N
 //  )
 //}
 object RestApiInfo extends ApiInfo(
-  "The Ubirch ID API",
-  "Docs for the Ubirch REST ID API",
+  "The Ubirch data API",
+  "Docs for the Ubirch data API",
   "https://ubirch.de",
   "responsibleperon@ubirch.com",
   "Apache V2",
