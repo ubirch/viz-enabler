@@ -18,5 +18,4 @@ class Device(payload: String) {
 
   private def payloadToJson = PayloadFactory(payload, PayloadType.Json)
 
-
 }

@@ -9,6 +9,7 @@ object Elements {
   val UBIRCH_PASSWORD_HEADER = "X-Ubirch-Credential"
   val AUTHORIZATION_SUCCESS_CODE = 200
   val AUTHORIZATION_FAIL_CODE = 401
+  val DEFAULT_ERROR_CODE = 400
   val DEVICE_TYPE_PYSENSE = "pysense"
   val DEVICE_TYPE_PYTRACK = "pytrack"
   val DEVICE_TYPE_UNKNOWN = "null"
@@ -24,6 +25,8 @@ object Elements {
   val HUMIDITY_NAME = "H"
   val VOLTAGE_NAME = "V"
   val TYPE_NAME = "type"
+  val AUTHENTICATION_ERROR_NAME = "Authentication"
+  val AUTHENTICATION_ERROR_DESCRIPTION = "Authentication against ubirch login failed."
 }
 
 abstract class Message {

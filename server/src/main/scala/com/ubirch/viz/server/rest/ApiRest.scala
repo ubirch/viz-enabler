@@ -5,6 +5,7 @@ import com.ubirch.viz.core.elastic.EsClient
 import com.ubirch.viz.server.authentification.Authenticate
 import com.ubirch.viz.server.models.{Device, Elements}
 import org.json4s.{DefaultFormats, Formats}
+import org.json4s.JsonDSL._
 import org.scalatra.{CorsSupport, ScalatraServlet}
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
@@ -29,6 +30,11 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
     contentType = formats("json")
   }
 
+  val hwDeviceIdHeaderSwagger: SwaggerSupportSyntax.ParameterBuilder[String] = headerParam[String]("X-Ubirch-Hardware-Id").
+    description("HardwareId of the device")
+  val passwordHeaderSwagger: SwaggerSupportSyntax.ParameterBuilder[String] = headerParam[String]("X-Ubirch-Credential").
+    description("Password of the device, base64 encoded")
+
   val postDataJson: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[String]("sendJson")
       summary "Send json to ES"
@@ -38,17 +44,15 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
       parameters (
         bodyParam[String]("payload").
         description("Payload to be stored, jsonFormat"),
-        headerParam[String]("X-Ubirch-Hardware-Id").
-        description("HardwareId of the device"),
-        headerParam[String]("X-Ubirch-Credential").
-        description("Password of the device")
+        hwDeviceIdHeaderSwagger,
+        passwordHeaderSwagger
       ))
 
   post("/json", operation(postDataJson)) {
-    logger.info("post(/json)")
-    logger.info(s"message: $getDeviceMessage")
-    val device = new Device(getDeviceMessage)
-    stopIfDeviceNotAuthorized(device)
+    val message = getDeviceMessage
+    logger.debug(s"post(/json), message = $message")
+    stopIfDeviceNotAuthorized()
+    val device = new Device(message)
     val messageToStore = device.enrichMessageJson
     EsClient.storeDeviceData(messageToStore)
   }
@@ -61,27 +65,51 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
       parameters (
         bodyParam[String]("payload").
         description("Payload to be stored, msgpack format"),
-        headerParam[String]("X-Ubirch-Hardware-Id").
-        description("HardwareId of the device"),
-        headerParam[String]("X-Ubirch-Credential").
-        description("Password of the device")
+        hwDeviceIdHeaderSwagger,
+        passwordHeaderSwagger
       ))
 
   post("/msgPack", operation(postDataMsgPack)) {
-    logger.info("post(/msgPack)")
-    logger.info(s"message: $getDeviceMessage")
-    val device = new Device(getDeviceMessage)
-    stopIfDeviceNotAuthorized(device)
+    val message = getDeviceMessage
+    logger.debug(s"post(/msgPack), message = $message")
+    val device = new Device(message)
+    stopIfDeviceNotAuthorized()
     val messageToStore = device.enrichMessagePack
     EsClient.storeDeviceData(messageToStore)
   }
 
-  def stopIfDeviceNotAuthorized(deviceMessage: Device): Unit = {
-    if (!Authenticate.isUserAuthorized(request)) halt(status = Elements.AUTHORIZATION_FAIL_CODE)
+  def stopIfDeviceNotAuthorized(): Unit = {
+    logger.debug("checking device auth")
+
+    if (!Authenticate.isUserAuthorized(request)) {
+      logger.info("Device not authorized")
+      halt(401, createServerError(Elements.AUTHENTICATION_ERROR_NAME, Elements.AUTHENTICATION_ERROR_DESCRIPTION))
+    }
   }
 
   def getDeviceMessage: String = {
-    request.body
+    val message = request.body
+    stopIfMessageEmpty(message)
+    message
+  }
+
+  def stopIfMessageEmpty(message: String): Unit = {
+    if (message.isEmpty) {
+      throw new Exception("Message is empty")
+    }
+  }
+
+  error {
+    case e =>
+      logger.error(createServerError("Generic error", e.getMessage))
+      halt(Elements.DEFAULT_ERROR_CODE, createServerError("Generic error", e.getMessage))
+  }
+
+  def createServerError(errorType: String, message: String): String = {
+    val errorMessage = "error" ->
+      ("error type" -> errorType) ~
+      ("message" -> message)
+    pretty(render(errorMessage))
   }
 
 }

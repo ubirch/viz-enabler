@@ -1,5 +1,5 @@
-environment: ubirch-dev
-namespace: ubirch-dev
+environment: ubirch-ENV
+namespace: ubirch-ENV
 ingestFQDN: ingest.ubirch.dev.ubirch.com
 keyServiceURL: key-svc.core-dev:8095
 kafkaURL: kafka.core-dev:9092
@@ -20,6 +20,8 @@ vizenabler:
   ubirch:
     authentication:
       endpoint: "aValue"
+  es:
+    index:  "anIndex"
   app:
     version: "aValue"
 

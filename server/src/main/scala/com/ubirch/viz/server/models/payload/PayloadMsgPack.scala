@@ -1,13 +1,12 @@
 package com.ubirch.viz.server.models.payload
 
+import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.server.models.{Elements, Message, MessageTypeZero}
 import org.apache.commons.codec.binary.Hex
 import org.msgpack.core.{MessagePack, MessageUnpacker}
 import org.msgpack.value.ValueType
 
-
-
-class PayloadMsgPack(payload: String) extends Payload {
+class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
 
   val unpacker: MessageUnpacker = getUnpacker
 
@@ -22,10 +21,16 @@ class PayloadMsgPack(payload: String) extends Payload {
 
   def toMessage: Message = {
     removeArrayHeader
-    val uuid = unpackNextAsString
+    val uuid = getUUID
     val msgType = unpackNextAsInt
     val (timeStamp, data) = extractDependingOnMessageType(msgType)
     MessageTypeZero(uuid, msgType, timeStamp, data)
+  }
+
+  private def getUUID = {
+    val uuid = new String(unpackNextAsString.getBytes("UTF-8"), "UTF-8")
+    logger.info(s"uuidRaw: $uuid")
+    uuid
   }
 
   private def extractDependingOnMessageType(msgType: Int): (Long, Map[String, Double]) = {
