@@ -3,7 +3,7 @@ package com.ubirch.viz.server.rest
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.elastic.EsClient
 import com.ubirch.viz.server.authentification.Authenticate
-import com.ubirch.viz.server.models.{Device, Elements}
+import com.ubirch.viz.server.models.{Device, Elements, MessageTypeZero}
 import org.json4s.{DefaultFormats, Formats}
 import org.json4s.JsonDSL._
 import org.scalatra.{CorsSupport, ScalatraServlet}
@@ -42,7 +42,7 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
       description "Send a JSON message that will be stored to ES"
       tags "send"
       parameters (
-        bodyParam[String]("payload").
+        bodyParam[MessageTypeZero]("payload").
         description("Payload to be stored, jsonFormat"),
         hwDeviceIdHeaderSwagger,
         passwordHeaderSwagger
@@ -63,7 +63,7 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
       description "Send a msgPack that will be stored to ES"
       tags "send"
       parameters (
-        bodyParam[String]("payload").
+        bodyParam[MessageTypeZero]("payload").
         description("Payload to be stored, msgpack format"),
         hwDeviceIdHeaderSwagger,
         passwordHeaderSwagger
