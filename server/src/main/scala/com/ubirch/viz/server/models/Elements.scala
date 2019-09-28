@@ -39,7 +39,7 @@ abstract class Message {
   def data: Map[String, Double]
 
   def convertTimestamp: String = {
-    new org.joda.time.DateTime(this.timestamp*Elements.MILLISECONDS_IN_SECOND).toDateTime(Elements.DEFAULT_TIMEZONE).toString
+    new org.joda.time.DateTime(this.timestamp * Elements.MILLISECONDS_IN_SECOND).toDateTime(Elements.DEFAULT_TIMEZONE).toString
   }
 
   def toJson: String = {
