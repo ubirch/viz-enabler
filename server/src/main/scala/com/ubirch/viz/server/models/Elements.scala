@@ -1,5 +1,6 @@
 package com.ubirch.viz.server.models
 
+import org.joda.time.DateTimeZone
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonAST
 import org.json4s.JsonDSL._
@@ -27,6 +28,8 @@ object Elements {
   val TYPE_NAME = "type"
   val AUTHENTICATION_ERROR_NAME = "Authentication"
   val AUTHENTICATION_ERROR_DESCRIPTION = "Authentication against ubirch login failed."
+  val MILLISECONDS_IN_SECOND = 1000
+  val DEFAULT_TIMEZONE = DateTimeZone.UTC
 }
 
 abstract class Message {
@@ -35,9 +38,13 @@ abstract class Message {
   def timestamp: Long
   def data: Map[String, Double]
 
+  def convertTimestamp: String = {
+    new org.joda.time.DateTime(this.timestamp*Elements.MILLISECONDS_IN_SECOND).toDateTime(Elements.DEFAULT_TIMEZONE).toString
+  }
+
   def toJson: String = {
     val json = ("uuid" -> uuid) ~
-      ("timestamp" -> timestamp) ~
+      ("timestamp" -> convertTimestamp) ~
       ("data" -> render(data))
     compact(render(json))
   }

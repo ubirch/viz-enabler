@@ -18,7 +18,7 @@ vizenabler:
     authentication:
       endpoint: "https://api.console.demo.ubirch.com/ubirch-web-ui/api/v1/auth"
   es:
-    index:  "device_data_vizualizer_demo"
+    index: "device_data_vizualizer_demo"
   app:
     version: "v1"
 

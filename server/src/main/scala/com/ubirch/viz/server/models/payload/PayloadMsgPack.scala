@@ -28,8 +28,8 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
   }
 
   private def getUUID = {
-    val uuid = new String(unpackNextAsString.getBytes("UTF-8"), "UTF-8")
-    logger.info(s"uuidRaw: $uuid")
+    val uuid = unpackNextAsString
+    logger.info(s"uuid: $uuid")
     uuid
   }
 
