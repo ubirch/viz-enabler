@@ -1,5 +1,8 @@
 package com.ubirch.viz.server.models.payload
 
+import java.math.BigInteger
+import java.util.UUID
+
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.server.models.{Elements, Message, MessageTypeZero}
 import org.apache.commons.codec.binary.Hex
@@ -22,15 +25,22 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
   def toMessage: Message = {
     removeArrayHeader
     val uuid = getUUID
+    logger.info("uuid: " + uuid)
     val msgType = unpackNextAsInt
     val (timeStamp, data) = extractDependingOnMessageType(msgType)
     MessageTypeZero(uuid, msgType, timeStamp, data)
   }
 
   private def getUUID = {
-    val uuid = unpackNextAsString
-    logger.info(s"uuid: $uuid")
-    uuid
+    val uuidAsByteArray = unpackNextAsBinaryArray
+    Hex.encodeHexString(uuidAsByteArray)
+  }
+
+  private def recreateUUIDFromString(uuidString: String) = {
+    new UUID(
+      new BigInteger(uuidString.substring(0, 16), 16).longValue(),
+      new BigInteger(uuidString.substring(16), 16).longValue()
+    ).toString
   }
 
   private def extractDependingOnMessageType(msgType: Int): (Long, Map[String, Double]) = {
@@ -71,15 +81,14 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
       case ValueType.STRING => valueType.asStringValue().toString
       case ValueType.INTEGER => valueType.asIntegerValue().toInt.toString
       case ValueType.FLOAT => valueType.asFloatValue().toFloat.toString
+      case ValueType.BINARY => {
+        val rawByte = valueType.asBinaryValue().asByteArray()
+        Hex.encodeHexString(rawByte)
+      }
       case _ =>
         println(valueType.getValueType.toString)
         throw new Exception("value type not recognized")
     }
-  }
-
-  private def stopIfNextStringIsNot(stringShouldBe: String): Unit = {
-    val nextString = unpackNextAsString
-    stopIfStringNotCorrect(nextString, stringShouldBe)
   }
 
   private def stopIfStringNotCorrect(string: String, shouldBe: String): Unit = {
@@ -91,5 +100,7 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
   private def unpackNextAsInt = unpacker.unpackInt()
   private def unpackNextAsLong = unpacker.unpackLong()
   private def unpackNextAsString: String = unpacker.unpackString()
+  private def unpackNextAsBinaryArray = unpacker.unpackValue().asBinaryValue().asByteArray()
+
 
 }

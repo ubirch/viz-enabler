@@ -2,7 +2,7 @@ environment: ubirch-demo
 namespace: ubirch-demo
 image:
   repository: ubirch/viz-enabler-server
-  tag: latest # set to your local image tag if needed
+  tag: latest
 
 # settings for ingest
 vizenabler:
@@ -45,6 +45,6 @@ imagePullSecrets:
 
 elasticsearch:
   protocol: "https"
-  host: "86ed92c1fba6eca897ea2d07f63b0979.eu-west-1.aws.found.io"
+  host: "edd874ccd31bfb7316312867860660c9.eu-west-1.aws.found.io"
   port: "9243"
 

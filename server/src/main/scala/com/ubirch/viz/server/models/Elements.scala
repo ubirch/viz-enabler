@@ -1,5 +1,8 @@
 package com.ubirch.viz.server.models
 
+import java.math.BigInteger
+import java.util.UUID
+
 import org.joda.time.DateTimeZone
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonAST
@@ -43,10 +46,20 @@ abstract class Message {
   }
 
   def toJson: String = {
-    val json = ("uuid" -> uuid) ~
+    val json = ("uuid" -> uuidAsString) ~
       ("timestamp" -> convertTimestamp) ~
       ("data" -> render(data))
     compact(render(json))
+  }
+
+  def uuidAsString: String = {
+    try {
+      UUID.fromString(uuid).toString
+    } catch {
+      case _: IllegalArgumentException =>
+        new UUID(new BigInteger(uuid.substring(0, 16), 16).longValue(),
+          new BigInteger(uuid.substring(16), 16).longValue()).toString
+    }
   }
 }
 

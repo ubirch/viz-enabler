@@ -7,7 +7,7 @@ class DeviceSpec extends FeatureSpec with LazyLogging with Matchers {
 
   feature("read message") {
     scenario("deserialze json") {
-      val message = """{ "uuid":"UBIR<q�� �<q�� �", "msg_type":0, "timestamp":1569397234, "data":{ "T":27.375, "L":[ 119, 171 ], "V":4.77702522277832, "Acc":{ "xyz":[ -0.0628662109375, 0.0382080078125, 1.0113525390625 ], "roll":3.556959390640259, "pitch":-2.159391164779663 }, "P":203.0, "H":63.683074951171878, "type":"pysense" } }"""
+      val message = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": 1569844780, "data": {"AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
       val device = new Device(message)
       val res = device.enrichMessageJson
       println("coucou")
@@ -28,13 +28,13 @@ class DeviceSpec extends FeatureSpec with LazyLogging with Matchers {
 object truc {
   def main(args: Array[String]): Unit = {
     println("----- MsgPack bellow -------")
-    val message = "94b0554249523c71bf8820dc3c71bf8820dc00ce5d8b8a6c8ba44163635acb3ff03e0000000000a148cb404cbe7700000000a84163635069746368cbbff78cb060000000a54c5f726564cc8ba64c5f626c75655aa154cb403d200000000000a156cb4013168920000000a441636358cbbfacc00000000000a150cb4064a80000000000a7416363526f6c6ccb4009542840000000a441636359cb3f9ac00000000000"
+    val message = "94c410554249523c71bf8820dc3c71bf8820dc00ce5d91d7938ba44163635acb3ff04e8000000000a148cb404dd1db00000000a84163635069746368cbbfe0af4cc0000000a54c5f726564ccbaa64c5f626c75657ea154cb403ea00000000000a156cb4013168920000000a441636358cbbf98800000000000a150cb4053800000000000a7416363526f6c6ccb3ff58462e0000000a441636359cb3f83000000000000"
     val device = new Device(message)
     val res = device.enrichMessagePack
     println(res)
 
     println("----- JSON bellow -------")
-    val message2 = """{ "uuid":"UBIR<q�� �<q�� �", "msg_type":0, "timestamp":1569397234, "data":{ "AccZ": 1.01513671875, "H": 57.488006591796878, "AccPitch": -1.4718478918075562, "L_red": 139, "L_blue": 90, "T": 29.125, "V": 4.772007465362549, "AccX": -0.05615234375, "P": 165.25, "AccRoll": 3.1660923957824709, "AccY": 0.026123046875 } }"""
+    val message2 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": 1569844780, "data": {"AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
     val device2 = new Device(message2)
     val res2 = device2.enrichMessageJson
     println(res2)

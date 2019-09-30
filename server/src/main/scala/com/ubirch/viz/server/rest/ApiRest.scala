@@ -20,7 +20,7 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   }
 
   // Stops the APIJanusController from being abstract
-  protected val applicationDescription = "API for sending data to Ubirch"
+  protected val applicationDescription = "Simple Data Service"
 
   // Sets up automatic case class to JSON output serialization
   protected implicit lazy val jsonFormats: Formats = DefaultFormats
@@ -37,13 +37,13 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
 
   val postDataJson: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[String]("sendJson")
-      summary "Send json to ES"
+      summary "Send a JSON"
       schemes ("http", "https") // Force swagger ui to use http OR https, only need to say it once
-      description "Send a JSON message that will be stored to ES"
+      description "Send a JSON message to the Ubirch Simple Data Service"
       tags "send"
       parameters (
         bodyParam[MessageTypeZero]("payload").
-        description("Payload to be stored, jsonFormat"),
+        description("""Payload to be stored, json format. Should have this format: {"uuid": uuid, "msg_type": 0,"timestamp": EPOCH_SECONDS, "data": Map[String, Double]}"""),
         hwDeviceIdHeaderSwagger,
         passwordHeaderSwagger
       ))
@@ -59,12 +59,12 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
 
   val postDataMsgPack: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[String]("sendMsgPack")
-      summary "Send msgPack to ES"
-      description "Send a msgPack that will be stored to ES"
+      summary "Send a msgPack"
+      description "Send a msgPack to the Ubirch Simple Data Service"
       tags "send"
       parameters (
         bodyParam[MessageTypeZero]("payload").
-        description("Payload to be stored, msgpack format"),
+        description("""Payload to be stored, msgpack format. Should have this format: {"uuid": uuid, "msg_type": 0,"timestamp": EPOCH_SECONDS, "data": Map[String, Double]}"""),
         hwDeviceIdHeaderSwagger,
         passwordHeaderSwagger
       ))
