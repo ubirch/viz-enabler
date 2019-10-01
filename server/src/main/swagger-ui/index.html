@@ -35,8 +35,10 @@
 <script>
     window.onload = function () {
         // Begin Swagger UI call region
+        const env = location.host;
+        const protocol = location.protocol;
         const ui = SwaggerUIBundle({
-           url: "https://data.dev.ubirch.com/v1/api-docs/swagger.json",
+           url: protocol + "//" + env + "/v1/api-docs/swagger.json",
             dom_id: '#swagger-ui',
             deepLinking: true,
             presets: [

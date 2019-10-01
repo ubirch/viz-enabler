@@ -1,8 +1,5 @@
 package com.ubirch.viz.server.models.payload
 
-import java.math.BigInteger
-import java.util.UUID
-
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.server.models.{Elements, Message, MessageTypeZero}
 import org.apache.commons.codec.binary.Hex
@@ -25,32 +22,29 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
   def toMessage: Message = {
     removeArrayHeader
     val uuid = getUUID
-    logger.info("uuid: " + uuid)
     val msgType = unpackNextAsInt
     val (timeStamp, data) = extractDependingOnMessageType(msgType)
     MessageTypeZero(uuid, msgType, timeStamp, data)
   }
 
   private def getUUID = {
-    val uuidAsByteArray = unpackNextAsBinaryArray
-    Hex.encodeHexString(uuidAsByteArray)
-  }
-
-  private def recreateUUIDFromString(uuidString: String) = {
-    new UUID(
-      new BigInteger(uuidString.substring(0, 16), 16).longValue(),
-      new BigInteger(uuidString.substring(16), 16).longValue()
-    ).toString
+    val uuidRaw = unpacker.unpackValue()
+    uuidRaw.getValueType match {
+      case ValueType.STRING => uuidRaw.asStringValue().toString
+      case _ =>
+        val uuidBinary = uuidRaw.asBinaryValue().asByteArray()
+        Hex.encodeHexString(uuidBinary)
+    }
   }
 
   private def extractDependingOnMessageType(msgType: Int): (Long, Map[String, Double]) = {
     msgType match {
-      case code if code.equals(Elements.DEFAULT_MESSAGE_TYPE) => defaultExtractionStrategy
+      case code if code.equals(Elements.DEFAULT_MESSAGE_TYPE) => typeZeroExtractionStrategy
       case _ => throw new Exception(s"Message type $msgType not supported")
     }
   }
 
-  private def defaultExtractionStrategy: (Long, Map[String, Double]) = {
+  private def typeZeroExtractionStrategy: (Long, Map[String, Double]) = {
     val timeStamp = unpackNextAsLong
     val data = unpackMap
     (timeStamp, data)
@@ -71,28 +65,24 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
 
   private def unpackNextValue: (String, String) = {
     val key = unpackNextAsString
-    val value: String = unpackDependingOnValue
+    val value: String = unpackToStringDependingOnValue
     (key, value)
   }
 
-  private def unpackDependingOnValue: String = {
+  private def unpackToStringDependingOnValue: String = {
     val valueType = unpacker.unpackValue
     valueType.getValueType match {
       case ValueType.STRING => valueType.asStringValue().toString
       case ValueType.INTEGER => valueType.asIntegerValue().toInt.toString
       case ValueType.FLOAT => valueType.asFloatValue().toFloat.toString
-      case ValueType.BINARY => {
+      case ValueType.NIL => "0"
+      case ValueType.BINARY =>
         val rawByte = valueType.asBinaryValue().asByteArray()
         Hex.encodeHexString(rawByte)
-      }
       case _ =>
-        println(valueType.getValueType.toString)
-        throw new Exception("value type not recognized")
+        logger.error("valueType: " + valueType.getValueType.toString)
+        throw new Exception(s"value type ${valueType.getValueType.toString} not supported")
     }
-  }
-
-  private def stopIfStringNotCorrect(string: String, shouldBe: String): Unit = {
-    if (!string.equals(shouldBe)) throw new Exception(s"$string not equal $shouldBe")
   }
 
   private def removeMapHeader = unpacker.unpackMapHeader()
@@ -100,7 +90,5 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
   private def unpackNextAsInt = unpacker.unpackInt()
   private def unpackNextAsLong = unpacker.unpackLong()
   private def unpackNextAsString: String = unpacker.unpackString()
-  private def unpackNextAsBinaryArray = unpacker.unpackValue().asBinaryValue().asByteArray()
-
 
 }

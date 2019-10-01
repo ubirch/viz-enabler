@@ -10,8 +10,8 @@ object PayloadFactory {
     }
   }
 
-  def getMsgPack(payload: String): PayloadMsgPack = new PayloadMsgPack(payload)
+  private def getMsgPack(payload: String): PayloadMsgPack = new PayloadMsgPack(payload)
 
-  def getJson(payload: String) = new PayloadJson(payload)
+  private def getJson(payload: String) = new PayloadJson(payload)
 
 }
