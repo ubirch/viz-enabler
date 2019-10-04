@@ -3,6 +3,7 @@ package com.ubirch.viz.server.models.payload
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.server.models.{Elements, Message, MessageTypeZero}
 import org.apache.commons.codec.binary.Hex
+import org.json4s.{DefaultFormats, Extraction}
 import org.msgpack.core.{MessagePack, MessageUnpacker}
 import org.msgpack.value.ValueType
 
@@ -24,7 +25,8 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
     val uuid = getUUID
     val msgType = unpackNextAsInt
     val (timeStamp, data) = extractDependingOnMessageType(msgType)
-    MessageTypeZero(uuid, msgType, timeStamp, data)
+    implicit val formats: DefaultFormats.type = DefaultFormats
+    MessageTypeZero(uuid, msgType, timeStamp, Extraction.decompose(data))
   }
 
   private def getUUID = {

@@ -4,6 +4,7 @@ import java.math.BigInteger
 import java.util.UUID
 
 import org.joda.time.DateTimeZone
+import org.json4s.JsonAST
 import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 
@@ -45,7 +46,7 @@ abstract class Message {
   def isSameUuid(headerUuid: String): Boolean = headerUuid.equals(uuid)
 }
 
-case class MessageTypeZero(uuid: String, msg_type: Int, timestamp: Long, data: Map[String, Double]) extends Message {
+case class MessageTypeZero(uuid: String, msg_type: Int, timestamp: Long, data: JsonAST.JValue) extends Message {
 
   def convertTimestamp: String = {
     new org.joda.time.DateTime(this.timestamp * Elements.MILLISECONDS_IN_SECOND).toDateTime(Elements.DEFAULT_TIMEZONE).toString
