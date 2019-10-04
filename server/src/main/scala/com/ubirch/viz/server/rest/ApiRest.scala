@@ -98,7 +98,8 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   }
 
   private def stopIfUuidDifferent(message: Message): Unit = {
-    if (!message.isSameUuid(request.getHeader(Elements.UBIRCH_ID_HEADER))) {
+    if (message.uuid != request.getHeader(Elements.UBIRCH_ID_HEADER)) {
+      logger.warn("message.uuid:" + message.uuid)
       logger.warn(s"""{"WARN": "UUIDs in header and payload different"}""")
       halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, "UUIDs in header and payload are different"))
     }

@@ -38,12 +38,10 @@ object Elements {
 }
 
 abstract class Message {
-  def uuid: String
-  def msg_type: Int
+  val uuid: String
+  val msg_type: Int
 
   def toJson: String
-
-  def isSameUuid(headerUuid: String): Boolean = headerUuid.equals(uuid)
 }
 
 case class MessageTypeZero(uuid: String, msg_type: Int, timestamp: Long, data: JsonAST.JValue) extends Message {
