@@ -3,14 +3,14 @@ package com.ubirch.viz.server.rest
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.elastic.EsClient
 import com.ubirch.viz.server.authentification.Authenticate
-import com.ubirch.viz.server.models.{ Elements, Message, MessageTypeZero }
-import com.ubirch.viz.server.models.payload.{ PayloadFactory, PayloadType }
 import com.ubirch.viz.server.models.payload.PayloadType.PayloadType
-import org.json4s.{ DefaultFormats, Formats }
+import com.ubirch.viz.server.models.payload.{ PayloadFactory, PayloadType }
+import com.ubirch.viz.server.models.{ Elements, Message, MessageTypeZero }
 import org.json4s.JsonDSL._
-import org.scalatra.{ CorsSupport, ScalatraServlet }
+import org.json4s.{ DefaultFormats, Formats }
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{ Swagger, SwaggerSupport, SwaggerSupportSyntax }
+import org.scalatra.{ CorsSupport, ScalatraServlet }
 
 class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   with NativeJsonSupport with SwaggerSupport with CorsSupport with LazyLogging {

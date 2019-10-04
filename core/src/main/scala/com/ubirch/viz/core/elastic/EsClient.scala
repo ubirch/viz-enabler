@@ -2,8 +2,8 @@ package com.ubirch.viz.core.elastic
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.alpakka.elasticsearch.{ ElasticsearchSourceSettings, ElasticsearchWriteSettings, MessageWriter, WriteMessage }
 import akka.stream.alpakka.elasticsearch.scaladsl.ElasticsearchFlow
+import akka.stream.alpakka.elasticsearch.{ ElasticsearchSourceSettings, ElasticsearchWriteSettings, MessageWriter, WriteMessage }
 import akka.stream.scaladsl.{ Sink, Source }
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.config.ConfigBase

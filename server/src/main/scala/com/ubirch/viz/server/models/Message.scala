@@ -2,9 +2,10 @@ package com.ubirch.viz.server.models
 
 import java.math.BigInteger
 import java.util.UUID
+
 import org.json4s.JsonAST
-import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
 
 abstract class Message {
   val uuid: String

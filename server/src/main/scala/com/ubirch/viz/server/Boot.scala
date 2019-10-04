@@ -3,8 +3,8 @@ package com.ubirch.viz.server
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.server.config.ConfigBase
 import com.ubirch.viz.server.models.Elements
-import org.eclipse.jetty.server.{ Handler, Server }
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
+import org.eclipse.jetty.server.{ Handler, Server }
 import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.webapp.WebAppContext
 import org.scalatra.servlet.ScalatraListener

@@ -1,7 +1,5 @@
 package com.ubirch.viz.server.models.payload
 
-import java.util.UUID
-
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.server.models.{ Elements, Message, MessageTypeZero }
 import org.apache.commons.codec.binary.Hex
