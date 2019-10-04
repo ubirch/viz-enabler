@@ -46,18 +46,25 @@ abstract class Message {
 
 case class MessageTypeZero(uuid: String, msg_type: Int, timestamp: Long, data: JsonAST.JValue) extends Message {
 
-  def convertTimestamp: String = {
-    new org.joda.time.DateTime(this.timestamp * Elements.MILLISECONDS_IN_SECOND).toDateTime(Elements.DEFAULT_TIMEZONE).toString
-  }
-
   def toJson: String = {
-    val json = ("uuid" -> uuidAsString) ~
-      ("timestamp" -> convertTimestamp) ~
-      ("data" -> render(data))
+    val json =
+      ("uuid" -> MessageTypeZero.uuidAsString(uuid)) ~
+        ("timestamp" -> MessageTypeZero.convertTimestamp(timestamp)) ~
+        ("data" -> render(data))
     compact(render(json))
   }
 
-  def uuidAsString: String = {
+}
+
+object MessageTypeZero {
+
+  def convertTimestamp(timestamp: Long): String = {
+    new org.joda.time.DateTime(timestamp * Elements.MILLISECONDS_IN_SECOND)
+      .toDateTime(Elements.DEFAULT_TIMEZONE)
+      .toString
+  }
+
+  def uuidAsString(uuid: String): String = {
     try {
       UUID.fromString(uuid).toString
     } catch {

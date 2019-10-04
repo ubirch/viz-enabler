@@ -1,6 +1,6 @@
 package com.ubirch.viz.server.models.payload
-import com.ubirch.viz.server.models.{Message, MessageTypeZero}
-import org.json4s.{DefaultFormats, JValue}
+import com.ubirch.viz.server.models.{ Message, MessageTypeZero }
+import org.json4s.{ DefaultFormats, JValue }
 import org.json4s.jackson.JsonMethods.parse
 
 class PayloadJson(payload: String) extends Payload {

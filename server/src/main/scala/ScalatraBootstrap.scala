@@ -1,4 +1,4 @@
-import com.ubirch.viz.server.rest.{ApiRest, ApiSwagger, ResourcesApp}
+import com.ubirch.viz.server.rest.{ ApiRest, ApiSwagger, ResourcesApp }
 import javax.servlet.ServletContext
 import org.scalatra.LifeCycle
 

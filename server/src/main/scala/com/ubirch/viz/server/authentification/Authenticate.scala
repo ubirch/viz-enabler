@@ -4,7 +4,7 @@ import com.ubirch.viz.server.config.ConfigBase
 import com.ubirch.viz.server.models.Elements
 import javax.servlet.http.HttpServletRequest
 import scalaj.http
-import scalaj.http.{Http, HttpResponse}
+import scalaj.http.{ Http, HttpResponse }
 
 object Authenticate extends ConfigBase {
   def isUserAuthorized(incomingRequest: HttpServletRequest): Boolean = {
