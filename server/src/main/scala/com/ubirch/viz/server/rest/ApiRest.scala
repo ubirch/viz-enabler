@@ -3,14 +3,14 @@ package com.ubirch.viz.server.rest
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.elastic.EsClient
 import com.ubirch.viz.server.authentification.Authenticate
-import com.ubirch.viz.server.models.{Elements, Message, MessageTypeZero}
-import com.ubirch.viz.server.models.payload.{PayloadFactory, PayloadType}
+import com.ubirch.viz.server.models.{ Elements, Message, MessageTypeZero }
+import com.ubirch.viz.server.models.payload.{ PayloadFactory, PayloadType }
 import com.ubirch.viz.server.models.payload.PayloadType.PayloadType
-import org.json4s.{DefaultFormats, Formats}
+import org.json4s.{ DefaultFormats, Formats }
 import org.json4s.JsonDSL._
-import org.scalatra.{CorsSupport, ScalatraServlet}
+import org.scalatra.{ CorsSupport, ScalatraServlet }
 import org.scalatra.json.NativeJsonSupport
-import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
+import org.scalatra.swagger.{ Swagger, SwaggerSupport, SwaggerSupportSyntax }
 
 class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   with NativeJsonSupport with SwaggerSupport with CorsSupport with LazyLogging {
@@ -20,7 +20,6 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
     response.setHeader("Access-Control-Allow-Methods", "POST, GET, DELETE, OPTIONS, PUT")
     response.setHeader("Access-Control-Allow-Origin", request.getHeader("Origin"))
   }
-
 
   // Stops the APIJanusController from being abstract
   protected val applicationDescription = "Simple Data Service"
@@ -74,7 +73,7 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   private def defaultProcess(payloadType: PayloadType): Unit = {
     val payload = getDeviceMessage
     logIncomingRoad(s"post(/${payloadType.toString})", s"payload = $payload")
-    val message = PayloadFactory(payload, PayloadType.MsgPack).toMessage
+    val message = PayloadFactory(payload, payloadType).toMessage
     checkAuthorization(message)
     sendMessageToElasticSearch(message)
   }
