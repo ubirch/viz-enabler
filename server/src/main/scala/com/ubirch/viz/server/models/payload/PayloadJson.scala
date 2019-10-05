@@ -29,7 +29,7 @@ class PayloadJson(payload: String) extends Payload with LazyLogging {
       val nv = try {
         val newValue = {
           val vs = value.extract[String]
-          if(vs.last.toString != "Z") vs + "Z"
+          if (vs.last.toString != "Z") vs + "Z"
           else vs
         }
         val f = DateTimeFormatter.ISO_DATE_TIME

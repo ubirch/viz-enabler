@@ -66,6 +66,10 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
         passwordHeaderSwagger
       ))
 
+  post("/msgpack", operation(postDataMsgPack)) {
+    defaultProcess(PayloadType.MsgPack)
+  }
+
   post("/msgPack", operation(postDataMsgPack)) {
     defaultProcess(PayloadType.MsgPack)
   }
