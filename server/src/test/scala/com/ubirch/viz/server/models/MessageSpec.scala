@@ -29,6 +29,13 @@ class MessageSpec extends FeatureSpec with LazyLogging with Matchers {
 
     }
 
+    scenario("deserialze json from string time without timezone 2") {
+      val payload = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:14.187873Z", "data": {"name": "hola", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+      val message = PayloadFactory(payload, PayloadType.Json).toMessage
+      message.toJson shouldBe """{"uuid":"55424952-3c71-bf88-20dc-3c71bf8820dc","timestamp":"2019-10-05T07:56:14.000Z","data":{"name":"hola","AccZ":1.017822,"H":62.32504,"AccPitch":-0.5838608,"L_red":97,"L_blue":64,"T":30.0,"V":4.772007,"AccX":-0.02722168,"P":99.75,"AccRoll":1.532012,"AccY":0.01037598}}""".stripMargin
+
+    }
+
     scenario("deserialize msgpack") {
       val payload = "94c410554249523c71bf8820dc3c71bf8820dc00ce5d932b998ba44163635acb3fefd50000000000a148cb404e26d100000000a84163635069746368cbc026336ea0000000a54c5f726564cd01c7a64c5f626c7565cd0136a154cb403d200000000000a156cb40131bac80000000a441636358cbbfaa800000000000a150cb4070d00000000000a7416363526f6c6ccb4007d3e640000000a441636359cb3fc9040000000000"
       val message = PayloadFactory(payload, PayloadType.MsgPack).toMessage
