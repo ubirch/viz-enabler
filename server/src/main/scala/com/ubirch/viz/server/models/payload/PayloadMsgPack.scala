@@ -1,10 +1,11 @@
 package com.ubirch.viz.server.models.payload
 
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.server.models.{ Elements, Message, MessageTypeZero }
+import com.ubirch.viz.server.models.Elements
+import com.ubirch.viz.server.models.message.{Message, MessageTypeZero}
 import org.apache.commons.codec.binary.Hex
-import org.json4s.{ DefaultFormats, Extraction }
-import org.msgpack.core.{ MessagePack, MessageUnpacker }
+import org.json4s.{DefaultFormats, Extraction}
+import org.msgpack.core.{MessagePack, MessageUnpacker}
 import org.msgpack.value.ValueType
 
 class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
@@ -45,7 +46,7 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
 
   private def extractDependingOnMessageType(msgType: Int): (Long, Map[String, Double]) = {
     msgType match {
-      case code if code.equals(Elements.DEFAULT_MESSAGE_TYPE) => typeZeroExtractionStrategy
+      case code if code.equals(Elements.MESSAGE_TYPE_0) => typeZeroExtractionStrategy
       case _ => throw new Exception(s"Message type $msgType not supported")
     }
   }

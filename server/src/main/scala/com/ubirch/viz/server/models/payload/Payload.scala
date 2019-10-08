@@ -1,6 +1,6 @@
 package com.ubirch.viz.server.models.payload
 
-import com.ubirch.viz.server.models.Message
+import com.ubirch.viz.server.models.message.Message
 
 trait Payload {
   def toMessage: Message

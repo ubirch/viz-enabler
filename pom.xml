@@ -103,6 +103,7 @@
         <!-- /plugins -->
         <msgpack-scala_2.12.version>0.8.13</msgpack-scala_2.12.version>
         <ubirch-crypto.version>2.1.0</ubirch-crypto.version>
+        <embedded-elasticsearch.version>2.7.0</embedded-elasticsearch.version>
     </properties>
 
 
@@ -220,6 +221,12 @@
             <groupId>org.scalatra</groupId>
             <artifactId>scalatra-scalatest_${scala.compat.version}</artifactId>
             <version>${scalatest.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>pl.allegro.tech</groupId>
+            <artifactId>embedded-elasticsearch</artifactId>
+            <version>${embedded-elasticsearch.version}</version>
         </dependency>
 
     </dependencies>

@@ -1,20 +1,20 @@
 package com.ubirch.viz.server.models.payload
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
-
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.server.models.{ Message, MessageTypeZero }
+import com.ubirch.viz.server.models.message.{Message, MessageTypeZero}
+import com.ubirch.viz.server.Util.TimeUtil
+import org.json4s.{DefaultFormats, JValue}
 import org.json4s.JsonAST.JLong
 import org.json4s.jackson.JsonMethods.parse
-import org.json4s.{ DefaultFormats, JValue }
 
 class PayloadJson(payload: String) extends Payload with LazyLogging {
 
   implicit val formats: DefaultFormats.type = DefaultFormats
 
   def toMessage: Message = {
-    val parsedMessage = parseMessage
-    parsedMessage.extract[MessageTypeZero]
+    val parsedMessage: JValue = parseMessage
+    (parsedMessage \ "msg_type").extract[Int] match {
+      case 0 => parsedMessage.extract[MessageTypeZero]
+    }
   }
 
   private def parseMessage: JValue = {
@@ -26,22 +26,21 @@ class PayloadJson(payload: String) extends Payload with LazyLogging {
     case (field, value) if field == "type" => ("devicetype", value)
     case (field, value) if field == "timestamp" =>
 
-      val nv = try {
-        val newValue = {
-          val vs = value.extract[String]
-          if (vs.last.toString != "Z") vs + "Z"
-          else vs
+      val newTimeStamp = try {
+        val timeStampUTC = {
+          val extractedTimeStamp = value.extract[String]
+          TimeUtil.toUtc(extractedTimeStamp)
         }
-        val f = DateTimeFormatter.ISO_DATE_TIME
-        val zdt = ZonedDateTime.parse(newValue, f)
-        JLong(zdt.toEpochSecond)
+        val zonedDateTime = TimeUtil.toZonedDateTime(timeStampUTC)
+        JLong(zonedDateTime.toEpochSecond)
       } catch {
         case e: Exception =>
           logger.warn("Time was time string but couldn't parse it to ISO DATE TIME. Defaulting to Millis, {}", e.getMessage)
           value
       }
 
-      (field, nv)
+      (field, newTimeStamp)
     case (field, value) => (field, value)
   }
+
 }

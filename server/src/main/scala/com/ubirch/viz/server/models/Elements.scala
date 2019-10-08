@@ -12,7 +12,7 @@ object Elements {
   val DEVICE_TYPE_PYTRACK = "pytrack"
   val DEVICE_TYPE_UNKNOWN = "null"
   val EXIT_ERROR_CODE: Int = -1
-  val DEFAULT_MESSAGE_TYPE = 0
+  val MESSAGE_TYPE_0 = 0
   val ACCELEROMETER_NAME = "Acc"
   val ACCELERATION_NAME = "xyz"
   val TEMPERATURE_NAME = "T"
@@ -30,3 +30,4 @@ object Elements {
   val UUID_RADIX = 16
   val UUID_MIDDLE = 16
 }
+
