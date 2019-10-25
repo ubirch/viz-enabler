@@ -12,9 +12,7 @@ class PayloadJson(payload: String) extends Payload with LazyLogging {
 
   def toMessage: Message = {
     val parsedMessage: JValue = parseMessage
-    (parsedMessage \ "msg_type").extract[Int] match {
-      case 0 => parsedMessage.extract[MessageTypeZero]
-    }
+    parsedMessage.extract[MessageTypeZero]
   }
 
   private def parseMessage: JValue = {
