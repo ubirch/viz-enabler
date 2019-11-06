@@ -69,13 +69,13 @@ spec:
                       - name: VIZ_ENABLER_ENV_METRICS_ES_IO_USER
                         valueFrom:
                           secretKeyRef:
-                            name: "elastico-secrets-avatar"
-                            key: "ELASTIC_IO_USER"
+                            name: "ubs.ubirch-elasticsearch"
+                            key: "username"
                       - name: VIZ_ENABLER_ENV_METRICS_ES_PASSWORD
                         valueFrom:
                           secretKeyRef:
-                            name: "elastico-secrets-avatar"
-                            key: "ELASTIC_IO_PASSWORD"
+                            name: "ubs.ubirch-elasticsearch"
+                            key: "password"
             dnsPolicy: ClusterFirst
             restartPolicy: Always
             terminationGracePeriodSeconds: 30
