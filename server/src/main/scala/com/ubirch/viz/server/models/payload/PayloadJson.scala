@@ -1,10 +1,12 @@
 package com.ubirch.viz.server.models.payload
+
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.server.models.message.{Message, MessageTypeZero}
 import com.ubirch.viz.server.Util.TimeUtil
-import org.json4s.{DefaultFormats, JValue}
+import com.ubirch.viz.server.models.message.{Message, MessageTypeZero}
+import org.joda.time.DateTime
 import org.json4s.JsonAST.JLong
 import org.json4s.jackson.JsonMethods.parse
+import org.json4s.{DefaultFormats, JValue}
 
 class PayloadJson(payload: String) extends Payload with LazyLogging {
 
@@ -26,8 +28,14 @@ class PayloadJson(payload: String) extends Payload with LazyLogging {
 
       val newTimeStamp = try {
         val timeStampUTC = {
-          val extractedTimeStamp = value.extract[String]
-          TimeUtil.toUtc(extractedTimeStamp)
+          value.extractOpt[Long] match {
+            case Some(tsLong) =>
+              TimeUtil.toZonedDateTime(new DateTime(tsLong))
+            case None =>
+              val extrac = value.extract[String]
+              TimeUtil.toUtc(extrac)
+          }
+
         }
         val zonedDateTime = TimeUtil.toZonedDateTime(timeStampUTC)
         JLong(zonedDateTime.toEpochSecond)

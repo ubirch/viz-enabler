@@ -6,5 +6,9 @@ abstract class Message {
 
   def toJson: String
 
+  def hash: Option[String]
+
   def isSameUuid(headerUuid: String): Boolean = headerUuid.equals(uuid)
 }
+
+

@@ -1,11 +1,13 @@
 package com.ubirch.viz.server.models.payload
 
+import java.util.Base64
+
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.server.models.Elements
-import com.ubirch.viz.server.models.message.{Message, MessageTypeZero}
+import com.ubirch.viz.server.models.message.{Message, MessageTypeOne, MessageTypeZero}
 import org.apache.commons.codec.binary.Hex
 import org.json4s.{DefaultFormats, Extraction}
-import org.msgpack.core.{MessagePack, MessageUnpacker}
+import org.msgpack.core.{MessageFormat, MessagePack, MessageUnpacker}
 import org.msgpack.value.ValueType
 
 class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
@@ -22,12 +24,12 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
   }
 
   def toMessage: Message = {
-    removeArrayHeader
+
+    unpacker.unpackArrayHeader()
+
     val uuid = getUUID
     val msgType = unpackNextAsInt
-    val (timeStamp, data) = extractDependingOnMessageType(msgType)
-    implicit val formats: DefaultFormats.type = DefaultFormats
-    MessageTypeZero(uuid, msgType, timeStamp, Extraction.decompose(data))
+    extractDependingOnMessageType(uuid, msgType)
   }
 
   private def getUUID = {
@@ -44,29 +46,52 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
     }
   }
 
-  private def extractDependingOnMessageType(msgType: Int): (Long, Map[String, Double]) = {
+  private def extractDependingOnMessageType(uuid: String, msgType: Int): Message = {
     msgType match {
-      case code if code.equals(Elements.MESSAGE_TYPE_0) => typeZeroExtractionStrategy
+      case code if code.equals(Elements.MESSAGE_TYPE_0) => typeZeroExtractionStrategy(uuid, msgType)
+      case code if code.equals(Elements.MESSAGE_TYPE_1) => typeOneExtractionStrategy(uuid, msgType)
       case _ => throw new Exception(s"Message type $msgType not supported")
     }
   }
 
-  private def typeZeroExtractionStrategy: (Long, Map[String, Double]) = {
+  private def typeZeroExtractionStrategy(uuid: String, msgType: Int): Message = {
     val timeStamp = unpackNextAsLong
     val data = unpackMap
-    (timeStamp, data)
+
+    implicit val formats: DefaultFormats.type = DefaultFormats
+    MessageTypeZero(uuid, msgType, timeStamp, Extraction.decompose(data), None)
+  }
+
+  private def typeOneExtractionStrategy(uuid: String, msgType: Int): Message = {
+    val timeStamp = unpackNextAsLong
+    val data = unpackMap
+    val hash = unpackHash
+
+    implicit val formats: DefaultFormats.type = DefaultFormats
+    MessageTypeOne(uuid, msgType, timeStamp, Extraction.decompose(data), hash)
   }
 
   private def unpackMap = {
-    removeMapHeader
+    val size = unpacker.unpackMapHeader()
 
-    val data = unpackKeyValueUntilTheEnd()
+    val data = unpackKeyValueUntilTheEnd(size)
     data.map { r => (r._1, r._2.toDouble) }.toMap
   }
 
-  def unpackKeyValueUntilTheEnd(accu: List[(String, String)] = List.empty): List[(String, String)] = {
-    if (unpacker.hasNext) {
-      unpackKeyValueUntilTheEnd(accu ++ List(unpackNextValue))
+  private def unpackHash = {
+    if (unpacker.hasNext && unpacker.getNextFormat.equals(MessageFormat.BIN8)) {
+      val value = unpacker.unpackValue()
+      val hashbin = value.asBinaryValue().asByteArray()
+      Some(Base64.getEncoder.encodeToString(hashbin))
+    }
+    else {
+      None
+    }
+  }
+
+  def unpackKeyValueUntilTheEnd(size: Int, accu: List[(String, String)] = List.empty): List[(String, String)] = {
+    if (unpacker.hasNext && size > 0) {
+      unpackKeyValueUntilTheEnd(size - 1, accu ++ List(unpackNextValue))
     } else accu
   }
 
@@ -77,7 +102,9 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
   }
 
   private def unpackToStringDependingOnValue: String = {
+
     val valueType = unpacker.unpackValue
+
     valueType.getValueType match {
       case ValueType.STRING => valueType.asStringValue().toString
       case ValueType.INTEGER => valueType.asIntegerValue().toInt.toString
@@ -92,10 +119,10 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
     }
   }
 
-  private def removeMapHeader = unpacker.unpackMapHeader()
-  private def removeArrayHeader = unpacker.unpackArrayHeader()
   private def unpackNextAsInt = unpacker.unpackInt()
+
   private def unpackNextAsLong = unpacker.unpackLong()
+
   private def unpackNextAsString: String = unpacker.unpackString()
 
 }

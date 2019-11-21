@@ -4,22 +4,23 @@ import java.math.BigInteger
 import java.util.UUID
 
 import com.ubirch.viz.server.models.Elements
-import org.json4s.jackson.JsonMethods.{compact, render}
 import org.json4s.JsonAST
 import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods.{compact, render}
 
-case class MessageTypeZero(uuid: String, msg_type: Int, timestamp: Long, data: JsonAST.JValue, hash: Option[String] = None) extends Message {
+case class MessageTypeOne(uuid: String, msg_type: Int, timestamp: Long, data: JsonAST.JValue, hash: Option[String]) extends Message {
 
   def toJson: String = {
-    val json = ("uuid" -> MessageTypeZero.uuidAsString(uuid)) ~
+    val json = ("uuid" -> MessageTypeOne.uuidAsString(uuid)) ~
       ("msg_type" -> msg_type) ~
-      ("timestamp" -> MessageTypeZero.convertTimestamp(timestamp)) ~
-      ("data" -> render(data))
+      ("timestamp" -> MessageTypeOne.convertTimestamp(timestamp)) ~
+      ("data" -> render(data)) ~
+      ("hash" -> render(hash))
     compact(render(json))
   }
 }
 
-object MessageTypeZero {
+object MessageTypeOne {
 
   def convertTimestamp(timestamp: Long): String = {
     new org.joda.time.DateTime(timestamp * Elements.MILLISECONDS_IN_SECOND)
