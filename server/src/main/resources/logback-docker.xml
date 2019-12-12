@@ -30,12 +30,18 @@
         </encoder>
     </appender>
 
+    <appender name="JSONSTDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <timeZone>UTC</timeZone>
+        </encoder>
+    </appender>
+
     <logger name="io.netty" level="WARN"/>
 
     <logger name="com.ubirch" level="DEBUG"/>
 
     <root level="INFO">
-        <appender-ref ref="STDERR"/>
+        <appender-ref ref="JSONSTDOUT"/>
     </root>
 
 </configuration>
