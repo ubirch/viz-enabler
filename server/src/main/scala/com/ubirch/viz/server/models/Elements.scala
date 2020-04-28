@@ -13,7 +13,7 @@ object Elements {
   val DEVICE_TYPE_UNKNOWN = "null"
   val EXIT_ERROR_CODE: Int = -1
   val MESSAGE_TYPE_0 = 0
-  val MESSAGE_TYPE_1= 1
+  val MESSAGE_TYPE_1 = 1
   val ACCELEROMETER_NAME = "Acc"
   val ACCELERATION_NAME = "xyz"
   val TEMPERATURE_NAME = "T"

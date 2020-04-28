@@ -11,4 +11,3 @@ abstract class Message {
   def isSameUuid(headerUuid: String): Boolean = headerUuid.equals(uuid)
 }
 
-

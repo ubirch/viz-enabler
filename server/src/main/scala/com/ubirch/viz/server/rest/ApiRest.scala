@@ -4,14 +4,14 @@ import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.elastic.EsClient
 import com.ubirch.viz.server.authentification.Authenticate
 import com.ubirch.viz.server.models.Elements
-import com.ubirch.viz.server.models.message.{Message, MessageTypeZero}
-import com.ubirch.viz.server.models.payload.{PayloadFactory, PayloadType}
+import com.ubirch.viz.server.models.message.{ Message, MessageTypeZero }
+import com.ubirch.viz.server.models.payload.{ PayloadFactory, PayloadType }
 import com.ubirch.viz.server.models.payload.PayloadType.PayloadType
-import org.json4s.{DefaultFormats, Formats}
+import org.json4s.{ DefaultFormats, Formats }
 import org.json4s.JsonDSL._
-import org.scalatra.{CorsSupport, ScalatraServlet}
+import org.scalatra.{ CorsSupport, ScalatraServlet }
 import org.scalatra.json.NativeJsonSupport
-import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
+import org.scalatra.swagger.{ Swagger, SwaggerSupport, SwaggerSupportSyntax }
 
 class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   with NativeJsonSupport with SwaggerSupport with CorsSupport with LazyLogging {
@@ -47,9 +47,12 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
       tags "send"
       parameters (
         bodyParam[MessageTypeZero]("payload").
-        description("""Payload to be stored, json format. Should have this format: {"uuid": uuid, "msg_type": 0,"timestamp": EPOCH_SECONDS, "data": Map[String, Double]}"""),
-        hwDeviceIdHeaderSwagger,
-        passwordHeaderSwagger
+        description(
+          """Payload to be stored, json format. Should have this format:
+            | {"uuid": uuid, "msg_type": 0,"timestamp": EPOCH_SECONDS, "data": Map[String, Double]}""".stripMargin
+        ),
+          hwDeviceIdHeaderSwagger,
+          passwordHeaderSwagger
       ))
 
   post("/json", operation(postDataJson)) {
@@ -63,9 +66,12 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
       tags "send"
       parameters (
         bodyParam[MessageTypeZero]("payload").
-        description("""Payload to be stored, msgpack format. Should have this format: {"uuid": uuid, "msg_type": 0,"timestamp": EPOCH_SECONDS, "data": Map[String, Double]}"""),
-        hwDeviceIdHeaderSwagger,
-        passwordHeaderSwagger
+        description(
+          """Payload to be stored, msgpack format. Should have this format:
+            | {"uuid": uuid, "msg_type": 0,"timestamp": EPOCH_SECONDS, "data": Map[String, Double]}""".stripMargin
+        ),
+          hwDeviceIdHeaderSwagger,
+          passwordHeaderSwagger
       ))
 
   post("/msgpack", operation(postDataMsgPack)) {

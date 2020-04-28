@@ -4,7 +4,7 @@ import java.math.BigInteger
 import java.util.UUID
 
 import com.ubirch.viz.server.models.Elements
-import org.json4s.jackson.JsonMethods.{compact, render}
+import org.json4s.jackson.JsonMethods.{ compact, render }
 import org.json4s.JsonAST
 import org.json4s.JsonDSL._
 

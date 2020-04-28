@@ -2,8 +2,8 @@ package com.ubirch.viz.server.models
 
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.config.ConfigBase
-import com.ubirch.viz.server.models.payload.{PayloadFactory, PayloadType}
-import org.scalatest.{BeforeAndAfterEach, FeatureSpec, Matchers}
+import com.ubirch.viz.server.models.payload.{ PayloadFactory, PayloadType }
+import org.scalatest.{ BeforeAndAfterEach, FeatureSpec, Matchers }
 
 class PayloadMsgPackSpec extends FeatureSpec with LazyLogging with Matchers with BeforeAndAfterEach with ConfigBase {
 

@@ -1,8 +1,8 @@
 package com.ubirch.viz.server.models
 
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.server.models.payload.{PayloadFactory, PayloadType}
-import org.scalatest.{FeatureSpec, Matchers}
+import com.ubirch.viz.server.models.payload.{ PayloadFactory, PayloadType }
+import org.scalatest.{ FeatureSpec, Matchers }
 
 class MessageSpec extends FeatureSpec with LazyLogging with Matchers {
 
@@ -31,7 +31,7 @@ class MessageSpec extends FeatureSpec with LazyLogging with Matchers {
     scenario("json") {
       val payload = """{ "uuid": "ba18ff73-73c4-4bd3-9bb6-bbf5db7bc685", "msg_type": 1, "timestamp": 1570266549, "data": { "mac": "DA:A1:19:51:FA:49", "firstTime": "2019-10-03 08:41:59", "lastTime": "2019-10-03 08:41:59", "power": -85, "packetsCount": 1, "BSSID": "(not associated)", "probedESSIDs": "" } }"""
       val message = PayloadFactory(payload, PayloadType.Json).toMessage
-      message.toJson shouldBe """{"uuid":"ba18ff73-73c4-4bd3-9bb6-bbf5db7bc685","msg_tpye":1,"timestamp":"2019-10-05T09:09:09.000Z","data":{"mac":"DA:A1:19:51:FA:49","firstTime":"2019-10-03 08:41:59","lastTime":"2019-10-03 08:41:59","power":-85,"packetsCount":1,"BSSID":"(not associated)","probedESSIDs":""}}"""
+      message.toJson shouldBe """{"uuid":"ba18ff73-73c4-4bd3-9bb6-bbf5db7bc685","msg_type":1,"timestamp":"2019-10-05T09:09:09.000Z","data":{"mac":"DA:A1:19:51:FA:49","firstTime":"2019-10-03 08:41:59","lastTime":"2019-10-03 08:41:59","power":-85,"packetsCount":1,"BSSID":"(not associated)","probedESSIDs":""}}"""
     }
   }
 

@@ -5,9 +5,9 @@ import java.util.concurrent.TimeUnit.MINUTES
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.config.ConfigBase
 import com.ubirch.viz.core.elastic.EsClient
-import com.ubirch.viz.server.models.payload.{PayloadFactory, PayloadType}
-import org.scalatest.{BeforeAndAfterEach, FeatureSpec, Matchers}
-import pl.allegro.tech.embeddedelasticsearch.{EmbeddedElastic, IndexSettings, PopularProperties}
+import com.ubirch.viz.server.models.payload.{ PayloadFactory, PayloadType }
+import org.scalatest.{ BeforeAndAfterEach, FeatureSpec, Matchers }
+import pl.allegro.tech.embeddedelasticsearch.{ EmbeddedElastic, IndexSettings, PopularProperties }
 
 import scala.collection.JavaConverters._
 

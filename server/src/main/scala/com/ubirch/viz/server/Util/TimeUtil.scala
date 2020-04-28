@@ -2,26 +2,29 @@ package com.ubirch.viz.server.Util
 
 import java.time.ZonedDateTime
 
+import org.joda.time.{ DateTime, DateTimeZone }
 import org.joda.time.format.ISODateTimeFormat
-import org.joda.time.{DateTime, DateTimeZone}
 
 object TimeUtil {
 
   val ZULU_TIME_CHAR = "Z"
 
   def toUtc(time: String): String = {
-    if (!isUtcTime(time)) addUtcTimestamp(time)
-    else time
+    if (!isUtcTime(time)) {
+      addUtcTimestamp(time)
+    } else {
+      time
+    }
   }
 
-  def toZonedDateTime(time: String) = {
+  def toZonedDateTime(time: String): ZonedDateTime = {
     import java.time.format.DateTimeFormatter
 
     val dateTimeFormatter = DateTimeFormatter.ISO_DATE_TIME
     ZonedDateTime.parse(time, dateTimeFormatter)
   }
 
-  def toZonedDateTime(time: DateTime):String = {
+  def toZonedDateTime(time: DateTime): String = {
     time.toDateTime(DateTimeZone.UTC).toString(ISODateTimeFormat.basicDateTime())
   }
 

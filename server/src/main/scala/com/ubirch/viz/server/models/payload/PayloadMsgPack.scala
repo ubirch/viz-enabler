@@ -4,17 +4,17 @@ import java.util.Base64
 
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.server.models.Elements
-import com.ubirch.viz.server.models.message.{Message, MessageTypeOne, MessageTypeZero}
+import com.ubirch.viz.server.models.message.{ Message, MessageTypeOne, MessageTypeZero }
 import org.apache.commons.codec.binary.Hex
-import org.json4s.{DefaultFormats, Extraction}
-import org.msgpack.core.{MessageFormat, MessagePack, MessageUnpacker}
+import org.json4s.{ DefaultFormats, Extraction }
+import org.msgpack.core.{ MessageFormat, MessagePack, MessageUnpacker }
 import org.msgpack.value.ValueType
 
 class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
 
   val unpacker: MessageUnpacker = getUnpacker
 
-  private def getUnpacker = {
+  private def getUnpacker: MessageUnpacker = {
     val messageBytes = hexToByte(payload)
     MessagePack.newDefaultUnpacker(messageBytes)
   }
@@ -32,7 +32,7 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
     extractDependingOnMessageType(uuid, msgType)
   }
 
-  private def getUUID = {
+  private def getUUID: String = {
     val uuidRaw = unpacker.unpackValue()
     uuidRaw.getValueType match {
       case ValueType.STRING =>
@@ -48,8 +48,8 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
 
   private def extractDependingOnMessageType(uuid: String, msgType: Int): Message = {
     msgType match {
-      case code if code.equals(Elements.MESSAGE_TYPE_0) => typeZeroExtractionStrategy(uuid, msgType)
-      case code if code.equals(Elements.MESSAGE_TYPE_1) => typeOneExtractionStrategy(uuid, msgType)
+      case code: Any if code.equals(Elements.MESSAGE_TYPE_0) => typeZeroExtractionStrategy(uuid, msgType)
+      case code: Any if code.equals(Elements.MESSAGE_TYPE_1) => typeOneExtractionStrategy(uuid, msgType)
       case _ => throw new Exception(s"Message type $msgType not supported")
     }
   }
@@ -71,20 +71,19 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
     MessageTypeOne(uuid, msgType, timeStamp, Extraction.decompose(data), hash)
   }
 
-  private def unpackMap = {
+  private def unpackMap: Map[String, Double] = {
     val size = unpacker.unpackMapHeader()
 
     val data = unpackKeyValueUntilTheEnd(size)
     data.map { r => (r._1, r._2.toDouble) }.toMap
   }
 
-  private def unpackHash = {
+  private def unpackHash: Option[String] = {
     if (unpacker.hasNext && unpacker.getNextFormat.equals(MessageFormat.BIN8)) {
       val value = unpacker.unpackValue()
       val hashbin = value.asBinaryValue().asByteArray()
       Some(Base64.getEncoder.encodeToString(hashbin))
-    }
-    else {
+    } else {
       None
     }
   }

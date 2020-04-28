@@ -2,11 +2,11 @@ package com.ubirch.viz.server.models.payload
 
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.server.Util.TimeUtil
-import com.ubirch.viz.server.models.message.{Message, MessageTypeZero}
+import com.ubirch.viz.server.models.message.{ Message, MessageTypeZero }
 import org.joda.time.DateTime
+import org.json4s.{ DefaultFormats, JValue }
 import org.json4s.JsonAST.JLong
 import org.json4s.jackson.JsonMethods.parse
-import org.json4s.{DefaultFormats, JValue}
 
 class PayloadJson(payload: String) extends Payload with LazyLogging {
 

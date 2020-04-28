@@ -2,20 +2,20 @@ package com.ubirch.viz.core.elastic
 
 import akka.actor.ActorSystem
 import akka.stream.ActorMaterializer
-import akka.stream.alpakka.elasticsearch.{ElasticsearchSourceSettings, ElasticsearchWriteSettings, MessageWriter, WriteMessage}
+import akka.stream.alpakka.elasticsearch.{ ElasticsearchSourceSettings, ElasticsearchWriteSettings, MessageWriter, WriteMessage }
 import akka.stream.alpakka.elasticsearch.scaladsl.ElasticsearchFlow
-import akka.stream.scaladsl.{Sink, Source}
+import akka.stream.scaladsl.{ Sink, Source }
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.core.config.ConfigBase
 import org.apache.http.HttpHost
-import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
+import org.apache.http.auth.{ AuthScope, UsernamePasswordCredentials }
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
 import org.elasticsearch.client.RestClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 object EsClient extends LazyLogging with ConfigBase {
 
