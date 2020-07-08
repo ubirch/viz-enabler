@@ -2,6 +2,7 @@
 *.log
 target
 .idea
+.idea/
 project/project
 project/target
 *.iml
