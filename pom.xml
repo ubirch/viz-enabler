@@ -6,13 +6,22 @@
     <!-- info -->
     <groupId>com.ubirch.viz</groupId>
     <artifactId>viz-enabler</artifactId>
-    <version>0.1.0</version>
-    <packaging>pom</packaging>
+    <version>0.1.1</version>
+    <packaging>jar</packaging>
 
     <organization>
         <name>ubirch GmbH</name>
         <url>https://ubirch.com/</url>
     </organization>
+
+    <developers>
+        <developer>
+            <name>Benoit George</name>
+            <email>benoit.george@ubirch.com</email>
+            <organization>ubirch GmbH</organization>
+            <organizationUrl>https://ubirch.com/</organizationUrl>
+        </developer>
+    </developers>
 
     <scm>
         <connection>scm:git:git://github.com/ubirch/ubirch-id-service.git</connection>
@@ -72,6 +81,8 @@
         <scala.version>${scala.major.version}${scala.minor.version}</scala.version>
         <scala.compat.version>2.12</scala.compat.version>
         <scala-maven-plugin.version>3.4.2</scala-maven-plugin.version>
+        <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
+
 
         <typesafe.config.version>1.3.4</typesafe.config.version>
 
@@ -96,6 +107,9 @@
         <!-- Testing -->
         <scalatest.version>2.6.5</scalatest.version>
 
+        <!-- ElasticSearch -->
+        <akka.stream.alpakka.version>1.1.0</akka.stream.alpakka.version>
+
 
         <!-- plugins -->
         <maven-dependency-plugin.version>2.8</maven-dependency-plugin.version>
@@ -104,11 +118,23 @@
         <msgpack-scala_2.12.version>0.8.13</msgpack-scala_2.12.version>
         <ubirch-crypto.version>2.1.0</ubirch-crypto.version>
         <embedded-elasticsearch.version>2.7.0</embedded-elasticsearch.version>
+        <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
+        <dockerfile-maven-plugin.version>1.4.4</dockerfile-maven-plugin.version>
+
+        <jetty-servlets.version>9.4.19.v20190610</jetty-servlets.version>
     </properties>
 
 
 
     <dependencies>
+
+
+        <!-- ElasticSearch -->
+        <dependency>
+            <groupId>com.lightbend.akka</groupId>
+            <artifactId>akka-stream-alpakka-elasticsearch_2.12</artifactId>
+            <version>${akka.stream.alpakka.version}</version>
+        </dependency>
 
         <!-- Scala -->
 
@@ -229,6 +255,29 @@
             <version>${embedded-elasticsearch.version}</version>
         </dependency>
 
+
+        <!-- Jetty servlet -->
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-servlets</artifactId>
+            <version>${jetty-servlets.version}</version>
+        </dependency>
+        <!-- /Jetty servlet -->
+
+        <!-- Simple HTTP client -->
+        <dependency>
+            <groupId>org.scalaj</groupId>
+            <artifactId>scalaj-http_${scala.compat.version}</artifactId>
+            <version>2.4.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.ubirch</groupId>
+            <artifactId>ubirch-client-scala</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+
     </dependencies>
 
 
@@ -260,6 +309,7 @@
                     <skipTests>true</skipTests>
                 </configuration>
             </plugin>
+
             <!-- enable scalatest -->
             <plugin>
                 <groupId>org.scalatest</groupId>
@@ -295,8 +345,6 @@
                     </execution>
                 </executions>
             </plugin>
-
-
 
             <!-- for mvn deploy to work, disable the default deploy plugin -->
             <plugin>
@@ -385,17 +433,96 @@
                     </execution>
                 </executions>
             </plugin>
+
+
+
+            <plugin>
+                <!-- see http://davidb.github.com/scala-maven-plugin -->
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>${scala-maven-plugin.version}</version>
+                <configuration>
+                    <mainClass>ScalatraBootstrap</mainClass>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>compile</goal>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <args>
+                                <arg>-feature</arg>
+                                <arg>-unchecked</arg>
+                                <arg>-deprecation</arg>
+                                <arg>-dependencyfile</arg>
+                                <arg>${project.build.directory}/.scala_dependencies</arg>
+                            </args>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven-jar-plugin.version}</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <mainClass>com.ubirch.viz.Boot</mainClass>
+                            <useUniqueVersions>false</useUniqueVersions>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- for mvn deploy to work, disable the default deploy plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>${maven-deploy-plugin.version}</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
+            <!-- create and/or push the created docker image -->
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>${dockerfile-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <buildDirectory>${project.build.outputDirectory}</buildDirectory>
+                    <repository>ubirch/viz-enabler-${project.artifactId}</repository>
+                    <tag>${build.number}</tag>
+                    <buildArgs>
+                        <VERSION>${project.version}</VERSION>
+                        <BUILD>${build.number}</BUILD>
+                        <SERVICE_NAME>${project.name}</SERVICE_NAME>
+                        <JAR_LIBS>target/lib</JAR_LIBS>
+                        <SWAGGER_UI>src/main/swagger-ui</SWAGGER_UI>
+                        <JAR_FILE>target/${project.build.finalName}.${project.packaging}</JAR_FILE>
+                    </buildArgs>
+                </configuration>
+            </plugin>
+
         </plugins>
 
 
     </build>
-
-
-    <!-- sub modules -->
-    <modules>
-        <module>server</module>
-        <module>core</module>
-    </modules>
 
 
 </project>
