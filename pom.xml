@@ -506,7 +506,7 @@
                 </executions>
                 <configuration>
                     <buildDirectory>${project.build.outputDirectory}</buildDirectory>
-                    <repository>ubirch/viz-enabler-${project.artifactId}</repository>
+                    <repository>ubirch/viz-enabler-server</repository>
                     <tag>${build.number}</tag>
                     <buildArgs>
                         <VERSION>${project.version}</VERSION>
