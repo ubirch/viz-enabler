@@ -3,11 +3,11 @@ package com.ubirch.viz.models.payload
 import java.util.Base64
 
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.models.message.{Message, MessageTypeOne, MessageTypeZero}
+import com.ubirch.viz.models.message.{ Message, MessageTypeOne, MessageTypeZero }
 import com.ubirch.viz.models.Elements
 import org.apache.commons.codec.binary.Hex
-import org.json4s.{DefaultFormats, Extraction}
-import org.msgpack.core.{MessageFormat, MessagePack, MessageUnpacker}
+import org.json4s.{ DefaultFormats, Extraction }
+import org.msgpack.core.{ MessageFormat, MessagePack, MessageUnpacker }
 import org.msgpack.value.ValueType
 
 class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
@@ -36,10 +36,10 @@ class PayloadMsgPack(payload: String) extends Payload with LazyLogging {
     val uuidRaw = unpacker.unpackValue()
     uuidRaw.getValueType match {
       case ValueType.STRING =>
-        logger.info("Getting UUID as String")
+        logger.debug("Getting UUID as String")
         uuidRaw.asStringValue().toString
       case _ =>
-        logger.info("Getting UUID as Binary")
+        logger.debug("Getting UUID as Binary")
         val uuidBinary = uuidRaw.asBinaryValue().asByteArray()
         val uuid = MessageTypeZero.uuidAsString(Hex.encodeHexString(uuidBinary))
         uuid

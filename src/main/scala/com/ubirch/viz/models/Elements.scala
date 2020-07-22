@@ -19,5 +19,6 @@ object Elements {
   val DEFAULT_TIMEZONE: DateTimeZone = DateTimeZone.UTC
   val UUID_RADIX = 16
   val UUID_MIDDLE = 16
+  val MESSAGE_ERROR_DIFFERENT_UUID = "UUIDs in header and payload are different"
 }
 

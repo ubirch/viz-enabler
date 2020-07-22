@@ -6,7 +6,7 @@ import java.util.UUID
 import com.ubirch.viz.models.Elements
 import org.json4s.JsonAST
 import org.json4s.JsonDSL._
-import org.json4s.jackson.JsonMethods.{compact, render}
+import org.json4s.jackson.JsonMethods.{ compact, render }
 
 case class MessageTypeOne(uuid: String, msg_type: Int, timestamp: Long, data: JsonAST.JValue, hash: Option[String]) extends Message {
 

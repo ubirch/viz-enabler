@@ -2,7 +2,7 @@ package com.ubirch.viz.Util
 
 import java.time.ZonedDateTime
 
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.{ DateTime, DateTimeZone }
 import org.joda.time.format.ISODateTimeFormat
 
 object TimeUtil {
