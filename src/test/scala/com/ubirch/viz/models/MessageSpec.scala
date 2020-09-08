@@ -1,8 +1,8 @@
 package com.ubirch.viz.models
 
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.models.payload.{PayloadFactory, PayloadType}
-import org.scalatest.{FeatureSpec, Matchers}
+import com.ubirch.viz.models.payload.{ PayloadFactory, PayloadType }
+import org.scalatest.{ FeatureSpec, Matchers }
 
 class MessageSpec extends FeatureSpec with LazyLogging with Matchers {
 

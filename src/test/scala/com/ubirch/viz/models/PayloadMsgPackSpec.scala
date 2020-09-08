@@ -1,11 +1,10 @@
 package com.ubirch.viz.models
 
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.config.ConfigBase
-import com.ubirch.viz.models.payload.{PayloadFactory, PayloadType}
-import org.scalatest.{BeforeAndAfterEach, FeatureSpec, Matchers}
+import com.ubirch.viz.models.payload.{ PayloadFactory, PayloadType }
+import org.scalatest.{ BeforeAndAfterEach, FeatureSpec, Matchers }
 
-class PayloadMsgPackSpec extends FeatureSpec with LazyLogging with Matchers with BeforeAndAfterEach with ConfigBase {
+class PayloadMsgPackSpec extends FeatureSpec with LazyLogging with Matchers with BeforeAndAfterEach {
 
   scenario("TYPE 0 msgPack payload") {
     val payload = "94c410554249523c71bf8820dc3c71bf8820dc00ce5d932b998ba44163635acb3fefd50000000000a148cb404e26d100000000a84163635069746368cbc026336ea0000000a54c5f726564cd01c7a64c5f626c7565cd0136a154cb403d200000000000a156cb40131bac80000000a441636358cbbfaa800000000000a150cb4070d00000000000a7416363526f6c6ccb4007d3e640000000a441636359cb3fc9040000000000"

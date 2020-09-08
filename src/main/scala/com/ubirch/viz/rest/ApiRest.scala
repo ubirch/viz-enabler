@@ -1,20 +1,26 @@
 package com.ubirch.viz.rest
 
+import com.sksamuel.elastic4s.Response
+import com.sksamuel.elastic4s.requests.indexes.IndexResponse
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.authentification.Authenticate
-import com.ubirch.viz.models.message.{Message, MessageTypeZero}
-import com.ubirch.viz.models.payload.{PayloadFactory, PayloadType}
-import com.ubirch.viz.models.Elements
+import com.ubirch.viz.authentification.AuthClient
+import com.ubirch.viz.models.{ ElasticUtil, Elements }
+import com.ubirch.viz.models.message.{ Message, MessageTypeZero }
+import com.ubirch.viz.models.payload.{ PayloadFactory, PayloadType }
 import com.ubirch.viz.models.payload.PayloadType.PayloadType
-import com.ubirch.viz.services.EsClient
-import org.json4s.{DefaultFormats, Formats}
+import com.ubirch.viz.services.SdsElasticClient
+import javax.inject.{ Inject, Singleton }
+import org.json4s.{ DefaultFormats, Formats }
 import org.json4s.JsonDSL._
-import org.scalatra.{CorsSupport, ScalatraServlet}
 import org.scalatra.json.NativeJsonSupport
-import org.scalatra.swagger.{Swagger, SwaggerSupport, SwaggerSupportSyntax}
+import org.scalatra.swagger.{ Swagger, SwaggerSupport, SwaggerSupportSyntax }
+import org.scalatra.{ CorsSupport, FutureSupport, ScalatraServlet }
 
-class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
-  with NativeJsonSupport with SwaggerSupport with CorsSupport with LazyLogging {
+import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future }
+
+@Singleton
+class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient, val swagger: Swagger) extends ScalatraServlet
+  with NativeJsonSupport with SwaggerSupport with CorsSupport with LazyLogging with FutureSupport {
 
   // Allows CORS support to display the swagger UI when using the same network
   options("/*") {
@@ -28,15 +34,17 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   // Sets up automatic case class to JSON output serialization
   protected implicit lazy val jsonFormats: Formats = DefaultFormats
 
+  protected implicit def executor: ExecutionContextExecutor = ExecutionContext.global
+
   // Before every action runs, set the content type to be in JSON format.
   before() {
     contentType = formats("json")
     stopIfNotAuthorized()
   }
 
-  val hwDeviceIdHeaderSwagger: SwaggerSupportSyntax.ParameterBuilder[String] = headerParam[String]("X-Ubirch-Hardware-Id").
+  val hwDeviceIdHeaderSwagger: SwaggerSupportSyntax.ParameterBuilder[String] = headerParam[String](Elements.UBIRCH_ID_HEADER).
     description("HardwareId of the device")
-  val passwordHeaderSwagger: SwaggerSupportSyntax.ParameterBuilder[String] = headerParam[String]("X-Ubirch-Credential").
+  val passwordHeaderSwagger: SwaggerSupportSyntax.ParameterBuilder[String] = headerParam[String](Elements.UBIRCH_PASSWORD_HEADER).
     description("Password of the device, base64 encoded")
 
   val postDataJson: SwaggerSupportSyntax.OperationBuilder =
@@ -56,7 +64,8 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
       ))
 
   post("/json", operation(postDataJson)) {
-    defaultProcess(PayloadType.Json)
+    writeInEs(PayloadType.Json)
+    ""
   }
 
   val postDataMsgPack: SwaggerSupportSyntax.OperationBuilder =
@@ -75,14 +84,56 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
       ))
 
   post("/msgpack", operation(postDataMsgPack)) {
-    defaultProcess(PayloadType.MsgPack)
+    writeInEs(PayloadType.MsgPack)
+    ""
   }
 
   post("/msgPack", operation(postDataMsgPack)) {
-    defaultProcess(PayloadType.MsgPack)
+    writeInEs(PayloadType.MsgPack)
+    ""
   }
 
-  private def defaultProcess(payloadType: PayloadType): Unit = {
+  val getLastMessageFromUUID: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[String]("getLastMessage")
+      summary "Get a message"
+      description "Get the last payload sent by the device with the specified uuid to the SDS."
+      tags "send"
+      parameters (
+        hwDeviceIdHeaderSwagger,
+        passwordHeaderSwagger
+      ))
+
+  get("/lastMessage/", operation(getLastMessageFromUUID)) {
+    val uuid = request.getHeader(Elements.UBIRCH_ID_HEADER)
+    logIncomingRoad(s"get(/lastMessage/$uuid)")
+    val elasticResponse = elasticClient.getLastDeviceData(uuid)
+    ElasticUtil.parseSingleData(uuid, elasticResponse)
+  }
+
+  val getMessageTimerange: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[String]("getMessagesTimerange")
+      summary "Get messages created during timerange."
+      description "Get the payloads sent by the device with the specified uuid to the SDS during the specified timerange."
+      tags "send"
+      parameters (
+        pathParam[String]("from").
+        description("Start of the timerange, format \"2020-06-22T13:47:28.000Z\""),
+        pathParam[String]("to").
+        description("End of the timerange, format \"2020-07-22T13:47:28.000Z\""),
+        hwDeviceIdHeaderSwagger,
+        passwordHeaderSwagger
+      ))
+
+  get("/timerange/:from/:to", operation(getMessageTimerange)) {
+    val uuid = request.getHeader(Elements.UBIRCH_ID_HEADER)
+    val from = params("from")
+    val to = params("to")
+    logIncomingRoad(s"get(/timerange/:$from/:$to/$uuid)")
+    val elasticResponse = elasticClient.getDeviceDataInTimerange(uuid, from, to)
+    ElasticUtil.parseMultipleData(uuid, elasticResponse)
+  }
+
+  private def writeInEs(payloadType: PayloadType): Future[Response[IndexResponse]] = {
     val payload = getPayload
     logIncomingRoad(s"post(/${payloadType.toString})", s"payload = $payload")
     val message = payloadToMessage(payload, payloadType)
@@ -90,9 +141,9 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
     sendMessageToElasticSearch(message)
   }
 
-  private def sendMessageToElasticSearch(message: Message): Unit = {
+  private def sendMessageToElasticSearch(message: Message): Future[Response[IndexResponse]] = {
     val jsonForEs = messageToJson(message)
-    EsClient.storeDeviceData(jsonForEs)
+    elasticClient.storeDeviceData(jsonForEs)
   }
 
   private def messageToJson(message: Message) = {
@@ -119,9 +170,9 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   private def stopIfNotAuthorized(): Unit = {
     logger.debug("checking device auth")
 
-    val keyCloakAuthenticationResponse = Authenticate.createRequestAndGetAuthorizationResponse(request)
-    if (!Authenticate.isAuthorisationCodeCorrect(keyCloakAuthenticationResponse)) {
-      logger.info("Device not authorized")
+    val keyCloakAuthenticationResponse = authClient.createRequestAndGetAuthorizationResponse(request)
+    if (!authClient.isAuthorisationCodeCorrect(keyCloakAuthenticationResponse)) {
+      logger.warn(s"Device not authorized")
       halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, keyCloakAuthenticationResponse.body))
     }
   }
@@ -129,7 +180,7 @@ class ApiRest(implicit val swagger: Swagger) extends ScalatraServlet
   private def stopIfUuidsAreDifferent(message: Message): Unit = {
     if (!message.isSameUuid(request.getHeader(Elements.UBIRCH_ID_HEADER))) {
       logger.warn(s"""{"WARN": "UUIDs in header and payload different"}""")
-      halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, "UUIDs in header and payload are different"))
+      halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, Elements.MESSAGE_ERROR_DIFFERENT_UUID))
     }
   }
 

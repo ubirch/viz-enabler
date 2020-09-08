@@ -93,7 +93,7 @@
         <javaxServlet.version>3.1.0</javaxServlet.version>
 
         <!-- Json -->
-        <json4s.version>3.6.7</json4s.version> <!-- Scalatra DOES NOT work with a json4s prior to 3.6.7 -->
+        <json4s.version>3.6.9</json4s.version> <!-- Scalatra DOES NOT work with a json4s prior to 3.6.7 -->
 
         <!-- Logging -->
         <scala.logging.version>3.9.0</scala.logging.version>
@@ -106,10 +106,10 @@
 
         <!-- Testing -->
         <scalatest.version>2.6.5</scalatest.version>
+        <testcontainer.version>1.14.3</testcontainer.version>
 
-        <!-- ElasticSearch -->
-        <akka.stream.alpakka.version>1.1.0</akka.stream.alpakka.version>
-
+        <!-- Elasticsearch -->
+        <elasticsearch.version>7.8.1</elasticsearch.version>
 
         <!-- plugins -->
         <maven-dependency-plugin.version>2.8</maven-dependency-plugin.version>
@@ -117,24 +117,19 @@
         <!-- /plugins -->
         <msgpack-scala_2.12.version>0.8.13</msgpack-scala_2.12.version>
         <ubirch-crypto.version>2.1.0</ubirch-crypto.version>
-        <embedded-elasticsearch.version>2.7.0</embedded-elasticsearch.version>
+
         <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
         <dockerfile-maven-plugin.version>1.4.4</dockerfile-maven-plugin.version>
 
         <jetty-servlets.version>9.4.19.v20190610</jetty-servlets.version>
+
+        <guice.version>4.1.0</guice.version>
+
     </properties>
 
 
 
     <dependencies>
-
-
-        <!-- ElasticSearch -->
-        <dependency>
-            <groupId>com.lightbend.akka</groupId>
-            <artifactId>akka-stream-alpakka-elasticsearch_2.12</artifactId>
-            <version>${akka.stream.alpakka.version}</version>
-        </dependency>
 
         <!-- Scala -->
 
@@ -221,6 +216,7 @@
             <artifactId>json4s-native_${scala.compat.version}</artifactId>
             <version>${json4s.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.json4s</groupId>
             <artifactId>json4s-jackson_${scala.compat.version}</artifactId>
@@ -249,12 +245,6 @@
             <version>${scalatest.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>pl.allegro.tech</groupId>
-            <artifactId>embedded-elasticsearch</artifactId>
-            <version>${embedded-elasticsearch.version}</version>
-        </dependency>
-
 
         <!-- Jetty servlet -->
         <dependency>
@@ -277,6 +267,47 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
+        <!-- Guice -->
+        <dependency>
+            <groupId>com.google.inject</groupId>
+            <artifactId>guice</artifactId>
+            <version>${guice.version}</version>
+        </dependency>
+
+        <!-- New es dependency -->
+        <!-- https://mvnrepository.com/artifact/com.sksamuel.elastic4s/elastic4s-http -->
+        <dependency>
+            <groupId>com.sksamuel.elastic4s</groupId>
+            <artifactId>elastic4s-client-esjava_2.12</artifactId>
+            <version>${elasticsearch.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.sksamuel.elastic4s</groupId>
+            <artifactId>elastic4s-core_2.12</artifactId>
+            <version>${elasticsearch.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>${testcontainer.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.sksamuel.elastic4s/elastic4s-json4s -->
+<!--        <dependency>-->
+<!--            <groupId>com.sksamuel.elastic4s</groupId>-->
+<!--            <artifactId>elastic4s-json4s_2.12</artifactId>-->
+<!--            <version>7.8.1</version>-->
+<!--        </dependency>-->
+
+        <!-- Needed otherwise it creates incompatibility between jackson versions being used -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.11.1</version>
+        </dependency>
 
     </dependencies>
 
@@ -284,6 +315,9 @@
 
     <build>
         <plugins>
+
+
+            <!-- scala compiler -->
             <plugin>
                 <groupId>net.alchim31.maven</groupId>
                 <artifactId>scala-maven-plugin</artifactId>
@@ -298,8 +332,56 @@
                 </executions>
                 <configuration>
                     <recompileMode>incremental</recompileMode>
+                    <args>
+                        <arg>-deprecation</arg>                      <!--  Emit warning and location for usages of deprecated APIs. -->
+                        <arg>-encoding</arg> <arg>utf-8</arg>        <!--  Specify character encoding used by source files. -->
+                        <arg>-explaintypes</arg>                     <!--  Explain type errors in more detail. -->
+                        <arg>-feature</arg>                          <!--  Emit warning and location for usages of features that should be imported explicitly. -->
+                        <arg>-unchecked</arg>                        <!--  Enable additional warnings where generated code depends on assumptions. -->
+                        <arg>-Xcheckinit</arg>                       <!--  Wrap field accessors to throw an exception on uninitialized access. -->
+                        <arg>-Xfuture</arg>                          <!--  Turn on future language features. -->
+                        <arg>-Xlint:adapted-args</arg>               <!--  Warn if an argument list is modified to match the receiver. -->
+                        <arg>-Xlint:by-name-right-associative</arg>  <!--  By-name parameter of right associative operator. -->
+                        <arg>-Xlint:constant</arg>                   <!--  Evaluation of a constant arithmetic expression results in an error. -->
+                        <arg>-Xlint:delayedinit-select</arg>         <!--  Selecting member of DelayedInit. -->
+                        <arg>-Xlint:doc-detached</arg>               <!--  A Scaladoc comment appears to be detached from its element. -->
+                        <arg>-Xlint:inaccessible</arg>               <!--  Warn about inaccessible types in method signatures. -->
+                        <arg>-Xlint:infer-any</arg>                  <!--  Warn when a type argument is inferred to be `Any`. -->
+                        <arg>-Xlint:missing-interpolator</arg>       <!--  A string literal appears to be missing an interpolator id. -->
+                        <arg>-Xlint:nullary-override</arg>           <!--  Warn when non-nullary `def f()' overrides nullary `def f'. -->
+                        <arg>-Xlint:nullary-unit</arg>               <!--  Warn when nullary methods return Unit. -->
+                        <arg>-Xlint:option-implicit</arg>            <!--  Option.apply used implicit view. -->
+                        <arg>-Xlint:package-object-classes</arg>     <!--  Class or object defined in package object. -->
+                        <arg>-Xlint:poly-implicit-overload</arg>     <!--  Parameterized overloaded implicit methods are not visible as view bounds. -->
+                        <arg>-Xlint:private-shadow</arg>             <!--  A private field (or class parameter) shadows a superclass field. -->
+                        <arg>-Xlint:stars-align</arg>                <!--  Pattern sequence wildcard must align with sequence component. -->
+                        <arg>-Xlint:type-parameter-shadow</arg>      <!--  A local type parameter shadows a type already in scope. -->
+                        <arg>-Xlint:unsound-match</arg>              <!--  Pattern match may not be typesafe. -->
+                        <arg>-Yno-adapted-args</arg>                 <!--  Do not adapt an argument list (either by inserting () or creating a tuple) to match the receiver. -->
+                        <arg>-Ypartial-unification</arg>             <!--  Enable partial unification in type constructor inference -->
+                        <arg>-Ywarn-dead-code</arg>                  <!--  Warn when dead code is identified. -->
+                        <arg>-Ywarn-extra-implicit</arg>             <!--  Warn when more than one implicit parameter section is defined. -->
+                        <arg>-Ywarn-inaccessible</arg>               <!--  Warn about inaccessible types in method signatures. -->
+                        <arg>-Ywarn-infer-any</arg>                  <!--  Warn when a type argument is inferred to be `Any`. -->
+                        <arg>-Ywarn-nullary-override</arg>           <!--  Warn when non-nullary `def f()' overrides nullary `def f'. -->
+                        <arg>-Ywarn-nullary-unit</arg>               <!--  Warn when nullary methods return Unit. -->
+                        <arg>-Ywarn-numeric-widen</arg>              <!--  Warn when numerics are widened. -->
+                        <arg>-Ywarn-unused:implicits</arg>           <!--  Warn if an implicit parameter is unused. -->
+                        <arg>-Ywarn-unused:imports</arg>             <!--  Warn if an import selector is not referenced. -->
+                        <arg>-Ywarn-unused:locals</arg>              <!--  Warn if a local definition is unused. -->
+                        <arg>-Ywarn-unused:params</arg>              <!--  Warn if a value parameter is unused. -->
+                        <arg>-Ywarn-unused:patvars</arg>             <!--  Warn if a variable bound in a pattern is unused. -->
+                        <arg>-Ywarn-unused:privates</arg>            <!--  Warn if a private member is unused. -->
+                        <arg>-Ywarn-value-discard</arg>              <!--  Warn when non-Unit expression results are unused. -->
+                        <arg>-feature</arg>
+                        <arg>-unchecked</arg>
+                        <arg>-deprecation</arg>
+                        <arg>-dependencyfile</arg>
+                        <arg>${project.build.directory}/.scala_dependencies</arg>
+                    </args>
                 </configuration>
             </plugin>
+
             <!-- disable surefire -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -346,15 +428,7 @@
                 </executions>
             </plugin>
 
-            <!-- for mvn deploy to work, disable the default deploy plugin -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.8.2</version>
-                <configuration>
-                    <skip>true</skip>
-                </configuration>
-            </plugin>
+
             <plugin>
                 <groupId>org.scalastyle</groupId>
                 <artifactId>scalastyle-maven-plugin</artifactId>
@@ -434,37 +508,6 @@
                 </executions>
             </plugin>
 
-
-
-            <plugin>
-                <!-- see http://davidb.github.com/scala-maven-plugin -->
-                <groupId>net.alchim31.maven</groupId>
-                <artifactId>scala-maven-plugin</artifactId>
-                <version>${scala-maven-plugin.version}</version>
-                <configuration>
-                    <mainClass>ScalatraBootstrap</mainClass>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>testCompile</goal>
-                        </goals>
-                        <configuration>
-                            <args>
-                                <arg>-feature</arg>
-                                <arg>-unchecked</arg>
-                                <arg>-deprecation</arg>
-                                <arg>-dependencyfile</arg>
-                                <arg>${project.build.directory}/.scala_dependencies</arg>
-                            </args>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
-
-
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>${maven-jar-plugin.version}</version>
@@ -473,7 +516,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.ubirch.viz.Boot</mainClass>
+                            <mainClass>com.ubirch.viz.Service</mainClass>
                             <useUniqueVersions>false</useUniqueVersions>
                         </manifest>
                     </archive>

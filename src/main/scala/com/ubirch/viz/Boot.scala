@@ -1,71 +1,64 @@
 package com.ubirch.viz
 
+import com.google.inject.{ Guice, Injector, Module }
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.config.ConfigBase
-import com.ubirch.viz.models.Elements
-import org.eclipse.jetty.server.{Handler, Server}
-import org.eclipse.jetty.server.handler.ContextHandlerCollection
-import org.eclipse.jetty.servlet.DefaultServlet
-import org.eclipse.jetty.webapp.WebAppContext
-import org.scalatra.servlet.ScalatraListener
 
-object Boot extends ConfigBase with LazyLogging {
+import scala.reflect.ClassTag
 
-  val contextPathBase: String = serverBaseUrl + "/" + appVersion
+/**
+  * Helper to manage Guice Injection.
+  */
+abstract class InjectorHelper(val modules: List[Module]) extends LazyLogging {
 
-  def main(args: Array[String]) {
-    val server = initializeServer
-    startServer(server)
+  import InjectorHelper._
 
-  }
-
-  private def initializeServer: Server = {
-    val server = createServer
-    val contexts = createContextsOfTheServer
-    server.setHandler(contexts)
-    server
-  }
-
-  private def startServer(server: Server): Unit = {
+  private val injector: Injector = {
     try {
-      server.start()
-      server.join()
+      Guice.createInjector(modules: _*)
     } catch {
       case e: Exception =>
-        logger.error(e.getMessage)
-        System.exit(Elements.EXIT_ERROR_CODE)
+        logger.error("Error Creating Injector: {} ", e.getMessage)
+        throw InjectorCreationException(e.getMessage)
     }
   }
 
-  private def createServer = {
-    new Server(serverPort)
+  def get[T](implicit ct: ClassTag[T]): T = get(ct.runtimeClass.asInstanceOf[Class[T]])
+
+  def get[T](clazz: Class[T]): T = {
+    try {
+      injector.getInstance(clazz)
+    } catch {
+      case e: Exception =>
+        logger.error("Error Injecting: {} ", e.getMessage)
+        throw InjectionException(e.getMessage)
+    }
   }
 
-  private def createContextsOfTheServer = {
-    val contextRestApi: WebAppContext = createContextScalatraApi
-    val contextSwaggerUi: WebAppContext = createContextSwaggerUi
-    initialiseContextHandlerCollection(Array(contextRestApi, contextSwaggerUi))
-  }
+}
 
-  private def initialiseContextHandlerCollection(contexts: Array[Handler]): ContextHandlerCollection = {
-    val contextCollection = new ContextHandlerCollection()
-    contextCollection.setHandlers(contexts)
-    contextCollection
-  }
+object InjectorHelper {
+  /**
+    * Represents an Exception for when injecting a component
+    * @param message Represents the error message
+    */
+  case class InjectionException(message: String) extends Exception(message)
 
-  private def createContextScalatraApi: WebAppContext = {
-    val contextRestApi = new WebAppContext()
-    contextRestApi.setContextPath(contextPathBase)
-    contextRestApi.setResourceBase("src/main/scala")
-    contextRestApi.addEventListener(new ScalatraListener)
-    contextRestApi.addServlet(classOf[DefaultServlet], "/")
-    contextRestApi
-  }
+  /**
+    * Represents an Exception for when creating an injector a component
+    * @param message Represents the error message
+    */
+  case class InjectorCreationException(message: String) extends Exception(message)
+}
 
-  private def createContextSwaggerUi: WebAppContext = {
-    val contextSwaggerUi = new WebAppContext()
-    contextSwaggerUi.setContextPath(contextPathBase + "/docs")
-    contextSwaggerUi.setResourceBase(swaggerPath)
-    contextSwaggerUi
-  }
+/**
+  * Represents an assembly for the boot process
+  */
+abstract class Boot(modules: List[Module]) extends InjectorHelper(modules) {
+  def *[T](block: => T): Unit =
+    try { block } catch {
+      case e: Exception =>
+        logger.error("Exiting after exception found = {}", e.getMessage)
+        Thread.sleep(5000)
+        sys.exit(1)
+    }
 }
