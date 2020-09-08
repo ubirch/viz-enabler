@@ -7,7 +7,6 @@ import com.sksamuel.elastic4s.requests.indexes.IndexResponse
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.config.ConfigProvider
 import com.ubirch.viz.config.ConfPaths.EsPaths
 import javax.inject.{ Inject, Singleton }
 import org.apache.http.auth.{ AuthScope, UsernamePasswordCredentials }
@@ -86,6 +85,7 @@ class DefaultSdsElasticClient @Inject() (config: Config) extends SdsElasticClien
         .query(boolQuery()
           .must(s"""uuid("$deviceUuid")""")
           .filter(rangeQuery("timestamp").gte(from).lte(to)))
+        .limit(100)
     }
   }
 

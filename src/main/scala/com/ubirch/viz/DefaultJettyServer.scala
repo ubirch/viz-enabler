@@ -2,7 +2,6 @@ package com.ubirch.viz
 
 import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.config.ConfigProvider
 import com.ubirch.viz.config.ConfPaths.ServerPaths
 import com.ubirch.viz.models.Elements
 import javax.inject.Inject

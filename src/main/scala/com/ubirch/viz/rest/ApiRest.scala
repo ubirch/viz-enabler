@@ -113,7 +113,8 @@ class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient
   val getMessageTimerange: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[String]("getMessagesTimerange")
       summary "Get messages created during timerange."
-      description "Get the payloads sent by the device with the specified uuid to the SDS during the specified timerange."
+      description "Get the payloads sent by the device with the specified uuid to the SDS during the specified timerange.\n" +
+      "Will only return a maximum of 100 values."
       tags "send"
       parameters (
         pathParam[String]("from").
