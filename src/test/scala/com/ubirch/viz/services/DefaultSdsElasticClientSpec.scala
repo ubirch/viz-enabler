@@ -36,7 +36,11 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
   container.start()
 
   val actualEsPort: Integer = container.getMappedPort(9200)
-  val Injector: InjectorHelper = FakeSimpleInjector(actualEsPort)
+  val actualEsHost = container.getHttpHostAddress.split(":").head
+
+  logger.info(s"ES host = $actualEsHost, port = $actualEsPort")
+
+  val Injector: InjectorHelper = FakeSimpleInjector(actualEsHost, actualEsPort)
   val conf = Injector.get[Config]
   // Do whatever you want with the rest client ...
   val credentialsProvider = new BasicCredentialsProvider()
@@ -59,7 +63,6 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
   val defaultUUID = "55424952-3c71-bf88-20dc-3c71bf8820dc"
   val defaultTimestamp = "2019-10-05T07:56:14.187873Z"
 
-  println("Injected")
   val esClient: SdsElasticClient = Injector.get[SdsElasticClient]
   feature("send data to es") {
     scenario("json classic") {
@@ -115,7 +118,6 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
 
       val treatedResFuture = ElasticUtil.parseSingleData(defaultUUID, res)
       val treatedRes = Await.result(treatedResFuture, 1.minute)
-      println(treatedRes)
 
       val mapShouldBe: List[(String, String)] = parse("""{"name": "hola", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}""").extract[Map[String, String]].toList.sorted
 
@@ -211,20 +213,20 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
   /**
     * Simple injector that replaces the kafka bootstrap server and topics to the given ones
     */
-  def FakeSimpleInjector(esPort: Integer): InjectorHelper = new InjectorHelper(List(new Binder {
-    override def Config: ScopedBindingBuilder = bind(classOf[Config]).toProvider(customTestConfigProvider(esPort))
+  def FakeSimpleInjector(host: String, esPort: Integer): InjectorHelper = new InjectorHelper(List(new Binder {
+    override def Config: ScopedBindingBuilder = bind(classOf[Config]).toProvider(customTestConfigProvider(host, esPort))
   })) {}
 
   /**
     * Overwrite default bootstrap server and topic values of the kafka consumer and producers
     */
-  def customTestConfigProvider(port: Int): ConfigProvider = new ConfigProvider {
+  def customTestConfigProvider(host: String, port: Int): ConfigProvider = new ConfigProvider {
     override def conf: Config = super.conf.withValue(
       EsPaths.ES_PORT,
       ConfigValueFactory.fromAnyRef(port)
     ).withValue(
-        EsPaths.ES_PORT,
-        ConfigValueFactory.fromAnyRef(port)
+        EsPaths.ES_HOST,
+        ConfigValueFactory.fromAnyRef(host)
       )
   }
 
@@ -235,7 +237,6 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
     import org.json4s.native.Serialization.write
     implicit val formats = Serialization.formats(NoTypeHints)
     val r = write(p)
-    println(r)
     List(r)
   }
 
