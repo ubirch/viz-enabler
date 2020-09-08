@@ -1,18 +1,12 @@
 package com.ubirch.viz.rest
 
-import java.util.concurrent.TimeUnit.MINUTES
-
 import com.google.inject.binder.ScopedBindingBuilder
-import com.ubirch.viz.{ Binder, InjectorHelper, Service }
-import com.ubirch.viz.authentification.{ AuthClient, AuthClientMockAlwaysNok, AuthClientMockAlwaysOk, MockValues }
-import com.ubirch.viz.config.ConfigProvider
+import com.ubirch.viz.{ Binder, InjectorHelper }
+import com.ubirch.viz.authentification.{ AuthClient, AuthClientMockAlwaysOk }
 import com.ubirch.viz.models.Elements
 import com.ubirch.viz.services.{ SdsElasticClient, SdsElasticClientMock }
 import org.scalatest.{ BeforeAndAfterEach, FeatureSpec, Matchers }
 import org.scalatra.test.scalatest.ScalatraSuite
-import pl.allegro.tech.embeddedelasticsearch.{ EmbeddedElastic, IndexSettings, PopularProperties }
-
-import scala.collection.JavaConverters._
 
 class ApiRestSpecAuthOk extends FeatureSpec with Matchers with ScalatraSuite with BeforeAndAfterEach {
 
@@ -21,7 +15,7 @@ class ApiRestSpecAuthOk extends FeatureSpec with Matchers with ScalatraSuite wit
   val defaultUUID = "55424952-3c71-bf88-20dc-3c71bf8820dc"
 
   val Injector = FakeInjectorAuthOk()
-  addServlet(new ApiRest(Injector.get[SdsElasticClient], new AuthClientMockAlwaysOk()), "/authOk")
+  addServlet(new ApiRest(Injector.get[SdsElasticClient], new AuthClientMockAlwaysOk(), new ApiSwagger), "/authOk")
 
   feature("send data auth ok") {
 

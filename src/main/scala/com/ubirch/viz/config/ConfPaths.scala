@@ -1,5 +1,7 @@
 package com.ubirch.viz.config
 
+import com.ubirch.viz.config.ConfPaths.EsPaths
+
 object ConfPaths {
 
   trait EsPaths {
@@ -21,3 +23,5 @@ object ConfPaths {
   }
 
 }
+
+object EsPaths extends EsPaths

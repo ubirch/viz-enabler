@@ -1,6 +1,8 @@
 package com.ubirch.viz.authentification
 
+import com.typesafe.config.Config
 import com.ubirch.viz.config.ConfigProvider
+import com.ubirch.viz.config.ConfPaths.ServerPaths
 import com.ubirch.viz.models.Elements
 import javax.inject.{ Inject, Singleton }
 import javax.servlet.http.HttpServletRequest
@@ -18,7 +20,7 @@ trait AuthClient {
 }
 
 @Singleton
-class DefaultAuthClient @Inject() (conf: ConfigProvider) extends AuthClient {
+class DefaultAuthClient @Inject() (conf: Config) extends AuthClient with ServerPaths {
 
   def isUserAuthorized(incomingRequest: HttpServletRequest): Boolean = {
     val authenticationResponse = createRequestAndGetAuthorizationResponse(incomingRequest)
@@ -42,6 +44,6 @@ class DefaultAuthClient @Inject() (conf: ConfigProvider) extends AuthClient {
   }
 
   private def sendAndReceiveRequest(headers: Seq[(String, String)]): HttpResponse[String] = {
-    Http(conf.ubirchAuthenticationEndpointUrl).headers(headers).asString
+    Http(conf.getString(SERVER_AUTH_ENDPOINT)).headers(headers).asString
   }
 }

@@ -1,41 +1,56 @@
 package com.ubirch.viz.services
 
-import java.util.concurrent.TimeUnit.MINUTES
-
-import com.sksamuel.elastic4s.http.Response
-import com.sksamuel.elastic4s.http.search.SearchResponse
+import com.google.inject.binder.ScopedBindingBuilder
+import com.sksamuel.elastic4s.requests.searches.SearchResponse
+import com.typesafe.config.{ Config, ConfigValueFactory }
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.{ Binder, InjectorHelper }
-import com.ubirch.viz.config.ConfigProvider
+import com.ubirch.viz.config.{ ConfigProvider, EsPaths }
+import com.ubirch.viz.config.ConfPaths.EsPaths
 import com.ubirch.viz.models.{ ElasticResponse, ElasticUtil }
 import com.ubirch.viz.models.payload.{ PayloadFactory, PayloadType }
+import org.apache.http.auth.{ AuthScope, UsernamePasswordCredentials }
+import org.apache.http.impl.client.BasicCredentialsProvider
+import org.apache.http.HttpHost
+import org.apache.http.util.EntityUtils
+import org.elasticsearch.client.{ Request, RestClient }
 import org.json4s.jackson.JsonMethods._
+import org.json4s.{ DefaultFormats, NoTypeHints }
+import org.json4s.native.Serialization
 import org.scalatest.{ BeforeAndAfterEach, FeatureSpec, Matchers }
-import pl.allegro.tech.embeddedelasticsearch.{ EmbeddedElastic, IndexSettings, PopularProperties }
+import org.testcontainers.elasticsearch.ElasticsearchContainer
 
-import scala.collection.JavaConverters._
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
 
-class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matchers with BeforeAndAfterEach {
+class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matchers with BeforeAndAfterEach with EsPaths {
 
   val DEFAULT_WAIT_TIME = 4000
 
-  val conf = new ConfigProvider
+  implicit val formats: DefaultFormats.type = org.json4s.DefaultFormats
 
-  implicit val formats = org.json4s.DefaultFormats
+  // Create the elasticsearch container.
 
-  val embeddedElastic: EmbeddedElastic = EmbeddedElastic.builder()
-    .withElasticVersion(conf.elasticVersion)
-    .withSetting(PopularProperties.HTTP_PORT, conf.elasticPort)
-    //.withSetting(PopularProperties.CLUSTER_NAME, "my_cluster")
-    .withEsJavaOpts("-Xms128m -Xmx512m")
-    .withStartTimeout(4, MINUTES)
-    .withCleanInstallationDirectoryOnStop(true)
-    .withIndex(conf.elasticIndex, IndexSettings.builder()
-      .build())
+  // Start the container. This step might take some time...
+  val container = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:7.8.1")
+  container.start()
+
+  val actualEsPort: Integer = container.getMappedPort(9200)
+  val Injector: InjectorHelper = FakeSimpleInjector(actualEsPort)
+  val conf = Injector.get[Config]
+  // Do whatever you want with the rest client ...
+  val credentialsProvider = new BasicCredentialsProvider()
+  credentialsProvider.setCredentials(
+    AuthScope.ANY,
+    new UsernamePasswordCredentials(conf.getString(ES_IO_USER), conf.getString(ES_PASSWORD))
+  )
+
+  val esMasterClient: RestClient = RestClient.builder(HttpHost.create(container.getHttpHostAddress))
+    .setHttpClientConfigCallback(_.setDefaultCredentialsProvider(credentialsProvider))
     .build()
-    .start()
+
+  esMasterClient.performRequest(new Request("GET", "/_cluster/health"))
+  esMasterClient.performRequest(new Request("PUT", s"/${conf.getString(ES_INDEX)}"))
 
   override def beforeEach(): Unit = {
     purgeEmbeddedEsIndex()
@@ -44,36 +59,36 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
   val defaultUUID = "55424952-3c71-bf88-20dc-3c71bf8820dc"
   val defaultTimestamp = "2019-10-05T07:56:14.187873Z"
 
-  val Injector = FakeSimpleInjector()
-  val esClient = Injector.get[SdsElasticClient]
+  println("Injected")
+  val esClient: SdsElasticClient = Injector.get[SdsElasticClient]
   feature("send data to es") {
     scenario("json classic") {
       val payload = """{"uuid":"55424952-3c71-bf88-20dc-3c71bf8820dc","timestamp":"2019-09-30T11:59:40.000Z","data":{"L_red":97.0,"T":30.0,"AccY":0.01037598,"L_blue":64.0,"AccZ":1.017822,"AccX":-0.02722168,"V":4.772007,"P":99.75,"AccRoll":1.532012,"H":62.32504,"AccPitch":-0.5838608}}"""
       esClient.storeDeviceData(payload)
-      Thread.sleep(DEFAULT_WAIT_TIME)
+      Thread.sleep(DEFAULT_WAIT_TIME.toLong)
       val response = getAllDocuments
       response.length shouldBe 1
-      response.head shouldBe """{"uuid":"55424952-3c71-bf88-20dc-3c71bf8820dc","timestamp":"2019-09-30T11:59:40.000Z","data":{"L_red":97.0,"T":30.0,"AccY":0.01037598,"L_blue":64.0,"AccZ":1.017822,"AccX":-0.02722168,"V":4.772007,"P":99.75,"AccRoll":1.532012,"H":62.32504,"AccPitch":-0.5838608}}"""
+      response.head shouldBe """[{"uuid":"55424952-3c71-bf88-20dc-3c71bf8820dc","timestamp":"2019-09-30T11:59:40.000Z","data":{"L_red":97.0,"T":30.0,"AccY":0.01037598,"L_blue":64.0,"AccZ":1.017822,"AccX":-0.02722168,"V":4.772007,"P":99.75,"AccRoll":1.532012,"H":62.32504,"AccPitch":-0.5838608}}]"""
     }
 
     scenario("TYPE 0 json payload") {
       val payload = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": 1569844780, "data": {"AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
       val message = PayloadFactory(payload, PayloadType.Json).toMessage
       esClient.storeDeviceData(message.toJson)
-      Thread.sleep(DEFAULT_WAIT_TIME)
+      Thread.sleep(DEFAULT_WAIT_TIME.toLong)
       val response = getAllDocuments
       response.length shouldBe 1
-      response.head shouldBe """{"uuid":"55424952-3c71-bf88-20dc-3c71bf8820dc","msg_type":0,"timestamp":"2019-09-30T11:59:40.000Z","data":{"AccZ":1.017822,"H":62.32504,"AccPitch":-0.5838608,"L_red":97,"L_blue":64,"T":30.0,"V":4.772007,"AccX":-0.02722168,"P":99.75,"AccRoll":1.532012,"AccY":0.01037598}}"""
+      response.head shouldBe """[{"uuid":"55424952-3c71-bf88-20dc-3c71bf8820dc","msg_type":0,"timestamp":"2019-09-30T11:59:40.000Z","data":{"AccZ":1.017822,"H":62.32504,"AccPitch":-0.5838608,"L_red":97,"L_blue":64,"T":30.0,"V":4.772007,"AccX":-0.02722168,"P":99.75,"AccRoll":1.532012,"AccY":0.01037598}}]"""
     }
 
     scenario("TYPE 0 msgPack payload") {
       val payload = "94c410554249523c71bf8820dc3c71bf8820dc00ce5d932b998ba44163635acb3fefd50000000000a148cb404e26d100000000a84163635069746368cbc026336ea0000000a54c5f726564cd01c7a64c5f626c7565cd0136a154cb403d200000000000a156cb40131bac80000000a441636358cbbfaa800000000000a150cb4070d00000000000a7416363526f6c6ccb4007d3e640000000a441636359cb3fc9040000000000"
       val message = PayloadFactory(payload, PayloadType.MsgPack).toMessage
       esClient.storeDeviceData(message.toJson)
-      Thread.sleep(DEFAULT_WAIT_TIME)
+      Thread.sleep(DEFAULT_WAIT_TIME.toLong)
       val response = getAllDocuments
       response.length shouldBe 1
-      response.head shouldBe """{"uuid":"55424952-3c71-bf88-20dc-3c71bf8820dc","msg_type":0,"timestamp":"2019-10-01T10:34:01.000Z","data":{"L_red":455.0,"T":29.125,"AccY":0.19543457,"L_blue":310.0,"AccZ":0.994751,"AccX":-0.051757812,"V":4.777025,"P":269.0,"AccRoll":2.9784665,"H":60.303253,"AccPitch":-11.100453}}"""
+      response.head shouldBe """[{"uuid":"55424952-3c71-bf88-20dc-3c71bf8820dc","msg_type":0,"timestamp":"2019-10-01T10:34:01.000Z","data":{"L_red":455.0,"T":29.125,"AccY":0.19543457,"L_blue":310.0,"AccZ":0.994751,"AccX":-0.051757812,"V":4.777025,"P":269.0,"AccRoll":2.9784665,"H":60.303253,"AccPitch":-11.100453}}]"""
 
     }
 
@@ -81,10 +96,10 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
       val payload = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:14.187873Z", "data": {"name": "hola", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
       val message = PayloadFactory(payload, PayloadType.Json).toMessage
       esClient.storeDeviceData(message.toJson)
-      Thread.sleep(DEFAULT_WAIT_TIME)
+      Thread.sleep(DEFAULT_WAIT_TIME.toLong)
       val response = getAllDocuments
       response.length shouldBe 1
-      response.head shouldBe """{"uuid":"55424952-3c71-bf88-20dc-3c71bf8820dc","msg_type":0,"timestamp":"2019-10-05T07:56:14.000Z","data":{"name":"hola","AccZ":1.017822,"H":62.32504,"AccPitch":-0.5838608,"L_red":97,"L_blue":64,"T":30.0,"V":4.772007,"AccX":-0.02722168,"P":99.75,"AccRoll":1.532012,"AccY":0.01037598}}""".stripMargin
+      response.head shouldBe """[{"uuid":"55424952-3c71-bf88-20dc-3c71bf8820dc","msg_type":0,"timestamp":"2019-10-05T07:56:14.000Z","data":{"name":"hola","AccZ":1.017822,"H":62.32504,"AccPitch":-0.5838608,"L_red":97,"L_blue":64,"T":30.0,"V":4.772007,"AccX":-0.02722168,"P":99.75,"AccRoll":1.532012,"AccY":0.01037598}}]""".stripMargin
     }
   }
 
@@ -95,10 +110,10 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
       }
       val message = PayloadFactory(payload, PayloadType.Json).toMessage
       esClient.storeDeviceData(message.toJson)
-      Thread.sleep(DEFAULT_WAIT_TIME)
-      val res: Future[Response[SearchResponse]] = esClient.getLastDeviceData(defaultUUID)
+      Thread.sleep(DEFAULT_WAIT_TIME.toLong)
+      val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getLastDeviceData(defaultUUID)
 
-      val treatedResFuture = ElasticUtil.parseData(defaultUUID, res)
+      val treatedResFuture = ElasticUtil.parseSingleData(defaultUUID, res)
       val treatedRes = Await.result(treatedResFuture, 1.minute)
       println(treatedRes)
 
@@ -129,10 +144,10 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
       esClient.storeDeviceData(message5.toJson)
       esClient.storeDeviceData(message3.toJson)
       esClient.storeDeviceData(message4.toJson)
-      Thread.sleep(DEFAULT_WAIT_TIME)
-      val res: Future[Response[SearchResponse]] = esClient.getLastDeviceData("55424952-3c71-bf88-20dc-3c71bf8820dc")
+      Thread.sleep(DEFAULT_WAIT_TIME.toLong)
+      val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getLastDeviceData("55424952-3c71-bf88-20dc-3c71bf8820dc")
 
-      val treatedResFuture = ElasticUtil.parseData(defaultUUID, res)
+      val treatedResFuture = ElasticUtil.parseSingleData(defaultUUID, res)
       val treatedRes = Await.result(treatedResFuture, 1.minute)
 
       val mapShouldBe = parse("""{"name": "hola5", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}""").extract[Map[String, String]].toList.sorted
@@ -143,13 +158,12 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
     }
 
     scenario("querying from valid uuid with no values in ES should return empty string") {
-      val res: Future[Response[SearchResponse]] = esClient.getLastDeviceData("55424952-3c71-bf88-20dc-3c71bf8820dc")
+      val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getLastDeviceData("55424952-3c71-bf88-20dc-3c71bf8820dc")
 
-      val treatedResFuture = ElasticUtil.parseData(defaultUUID, res)
+      val treatedResFuture = ElasticUtil.parseSingleData(defaultUUID, res)
       val treatedRes = Await.result(treatedResFuture, 1.minute)
 
       treatedRes.uuid shouldBe defaultUUID
-      treatedRes.ok shouldBe false
       treatedRes.timestamp shouldBe None
       treatedRes.value.head._1 shouldBe "errorMessage"
       treatedRes.value.head._2.contains("Error getting value from elasticsearch: ElasticError(search_phase_execution_exception,all shards failed,None,None,None,List(ElasticError(query_shard_exception,No mapping found for [timestamp] in order to sort on") shouldBe true
@@ -160,26 +174,73 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
       val payload = s"""{"uuid": "$otherUUID", "timestamp": "2019-10-05T07:56:14.187873Z", "data": {"name": "hola", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
       val message = PayloadFactory(payload, PayloadType.Json).toMessage
       esClient.storeDeviceData(message.toJson)
-      Thread.sleep(DEFAULT_WAIT_TIME)
-      val res: Future[Response[SearchResponse]] = esClient.getLastDeviceData(defaultUUID)
+      Thread.sleep(DEFAULT_WAIT_TIME.toLong)
+      val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getLastDeviceData(defaultUUID)
 
-      val treatedResFuture = ElasticUtil.parseData(defaultUUID, res)
+      val treatedResFuture = ElasticUtil.parseSingleData(defaultUUID, res)
       val treadtedRes = Await.result(treatedResFuture, 1.minute)
 
-      treadtedRes shouldBe ElasticResponse(defaultUUID, ok = false, None, Map("errorMessage" -> "No data associated to the latest record"))
+      treadtedRes shouldBe ElasticResponse(defaultUUID, None, Map("errorMessage" -> "No data associated to the latest record"))
     }
 
   }
 
+  feature("get values timestamp") {
+    scenario("querying from valid uuid with multiple values should return the last one") {
+      val payload1 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:14.187873Z", "data": {"name": "hola1", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+      val payload2 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:15.197873Z", "data": {"name": "hola2", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+      val payload3 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:16.207873Z", "data": {"name": "hola3", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+      val payload4 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:17.217873Z", "data": {"name": "hola4", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+      val payload5 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:18.227873Z", "data": {"name": "hola5", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+
+      val messages = PayloadFactory(payload1, PayloadType.Json).toMessage :: PayloadFactory(payload2, PayloadType.Json).toMessage :: PayloadFactory(payload3, PayloadType.Json).toMessage :: PayloadFactory(payload4, PayloadType.Json).toMessage :: PayloadFactory(payload5, PayloadType.Json).toMessage :: Nil
+
+      for (message <- messages) { esClient.storeDeviceData(message.toJson) }
+
+      Thread.sleep(DEFAULT_WAIT_TIME.toLong)
+      val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getDeviceDataInTimerange("55424952-3c71-bf88-20dc-3c71bf8820dc", "2019-10-05T07:56:13Z", "2019-10-05T07:56:17Z")
+
+      val r3 = Await.result(res, 1.minute)
+
+      val treatedResFuture = ElasticUtil.parseMultipleData(defaultUUID, res)
+      val treatedRes = Await.result(treatedResFuture, 1.minute)
+
+      treatedRes.responses.size shouldBe 4
+    }
+  }
   /**
     * Simple injector that replaces the kafka bootstrap server and topics to the given ones
     */
-  def FakeSimpleInjector(): InjectorHelper = new InjectorHelper(List(new Binder)) {}
+  def FakeSimpleInjector(esPort: Integer): InjectorHelper = new InjectorHelper(List(new Binder {
+    override def Config: ScopedBindingBuilder = bind(classOf[Config]).toProvider(customTestConfigProvider(esPort))
+  })) {}
 
-  def getAllDocuments = embeddedElastic.fetchAllDocuments().asScala.toList
+  /**
+    * Overwrite default bootstrap server and topic values of the kafka consumer and producers
+    */
+  def customTestConfigProvider(port: Int): ConfigProvider = new ConfigProvider {
+    override def conf: Config = super.conf.withValue(
+      EsPaths.ES_PORT,
+      ConfigValueFactory.fromAnyRef(port)
+    ).withValue(
+        EsPaths.ES_PORT,
+        ConfigValueFactory.fromAnyRef(port)
+      )
+  }
+
+  def getAllDocuments: List[String] = {
+    val res = esMasterClient.performRequest(new Request("GET", s"/${conf.getString(ES_INDEX)}/_search"))
+    val t = EntityUtils.toString(res.getEntity)
+    val p = parse(t) \ "hits" \ "hits" \ "_source"
+    import org.json4s.native.Serialization.write
+    implicit val formats = Serialization.formats(NoTypeHints)
+    val r = write(p)
+    println(r)
+    List(r)
+  }
 
   def purgeEmbeddedEsIndex(): Unit = {
-    embeddedElastic.deleteIndex(conf.elasticIndex)
-    embeddedElastic.createIndex(conf.elasticIndex)
+    esMasterClient.performRequest(new Request("DELETE", s"/${conf.getString(ES_INDEX)}"))
+    esMasterClient.performRequest(new Request("PUT", s"/${conf.getString(ES_INDEX)}"))
   }
 }

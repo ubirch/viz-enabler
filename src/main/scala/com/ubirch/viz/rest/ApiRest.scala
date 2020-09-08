@@ -1,7 +1,7 @@
 package com.ubirch.viz.rest
 
-import com.sksamuel.elastic4s.http.index.IndexResponse
-import com.sksamuel.elastic4s.http.Response
+import com.sksamuel.elastic4s.Response
+import com.sksamuel.elastic4s.requests.indexes.IndexResponse
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.authentification.AuthClient
 import com.ubirch.viz.models.{ ElasticUtil, Elements }
@@ -19,7 +19,7 @@ import org.scalatra.{ CorsSupport, FutureSupport, ScalatraServlet }
 import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future }
 
 @Singleton
-class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient)(implicit val swagger: Swagger) extends ScalatraServlet
+class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient, val swagger: Swagger) extends ScalatraServlet
   with NativeJsonSupport with SwaggerSupport with CorsSupport with LazyLogging with FutureSupport {
 
   // Allows CORS support to display the swagger UI when using the same network
@@ -94,21 +94,43 @@ class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient
   }
 
   val getLastMessageFromUUID: SwaggerSupportSyntax.OperationBuilder =
-    (apiOperation[String]("getMessage")
+    (apiOperation[String]("getLastMessage")
       summary "Get a message"
       description "Get the last payload sent by the device with the specified uuid to the SDS."
       tags "send"
       parameters (
-        pathParam("uuid").description("uuid of the device"),
         hwDeviceIdHeaderSwagger,
         passwordHeaderSwagger
       ))
 
-  get("/:uuid", operation(getLastMessageFromUUID)) {
-    val uuid = params("uuid")
-    logIncomingRoad(s"get(/$uuid)")
+  get("/lastMessage/", operation(getLastMessageFromUUID)) {
+    val uuid = request.getHeader(Elements.UBIRCH_ID_HEADER)
+    logIncomingRoad(s"get(/lastMessage/$uuid)")
     val elasticResponse = elasticClient.getLastDeviceData(uuid)
-    ElasticUtil.parseData(uuid, elasticResponse)
+    ElasticUtil.parseSingleData(uuid, elasticResponse)
+  }
+
+  val getMessageTimerange: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[String]("getMessagesTimerange")
+      summary "Get messages created during timerange."
+      description "Get the payloads sent by the device with the specified uuid to the SDS during the specified timerange."
+      tags "send"
+      parameters (
+        pathParam[String]("from").
+        description("Start of the timerange, format \"2020-06-22T13:47:28.000Z\""),
+        pathParam[String]("to").
+        description("End of the timerange, format \"2020-07-22T13:47:28.000Z\""),
+        hwDeviceIdHeaderSwagger,
+        passwordHeaderSwagger
+      ))
+
+  get("/timerange/:from/:to", operation(getMessageTimerange)) {
+    val uuid = request.getHeader(Elements.UBIRCH_ID_HEADER)
+    val from = params("from")
+    val to = params("to")
+    logIncomingRoad(s"get(/timerange/:$from/:$to/$uuid)")
+    val elasticResponse = elasticClient.getDeviceDataInTimerange(uuid, from, to)
+    ElasticUtil.parseMultipleData(uuid, elasticResponse)
   }
 
   private def writeInEs(payloadType: PayloadType): Future[Response[IndexResponse]] = {

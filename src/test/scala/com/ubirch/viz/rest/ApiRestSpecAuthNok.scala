@@ -19,7 +19,7 @@ class ApiRestSpecAuthNok extends FeatureSpec with Matchers with ScalatraSuite wi
   feature("send data auth nok") {
 
     val Injector = FakeInjectorAuthNOk()
-    mount(new ApiRest(Injector.get[SdsElasticClient], new AuthClientMockAlwaysNok), "/authNok")
+    mount(new ApiRest(Injector.get[SdsElasticClient], new AuthClientMockAlwaysNok, new ApiSwagger), "/authNok")
 
     scenario("json") {
       val payload = s"""{"uuid": "$defaultUUID", "timestamp": 1569844780, "data": {"AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""

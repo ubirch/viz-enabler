@@ -1,7 +1,9 @@
 package com.ubirch.viz
 
+import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.config.ConfigProvider
+import com.ubirch.viz.config.ConfPaths.ServerPaths
 import com.ubirch.viz.models.Elements
 import javax.inject.Inject
 import org.eclipse.jetty.server.{ Handler, Server }
@@ -14,9 +16,14 @@ trait JettyServer {
   def start(): Unit
 }
 
-class DefaultJettyServer @Inject() (conf: ConfigProvider) extends JettyServer with LazyLogging {
+class DefaultJettyServer @Inject() (conf: Config) extends JettyServer with LazyLogging with ServerPaths {
 
-  val contextPathBase: String = conf.serverBaseUrl + "/" + conf.appVersion
+  val serverPort: Int = conf.getInt(SERVER_PORT)
+  val serverBaseUrl: String = conf.getString(SERVER_BASE_URL)
+  val appVersion: String = conf.getString(APP_VERSION)
+  val swaggerPath: String = conf.getString(SERVER_PATH)
+
+  val contextPathBase: String = serverBaseUrl + "/" + appVersion
 
   private def initializeServer: Server = {
     val server = createServer
@@ -38,7 +45,7 @@ class DefaultJettyServer @Inject() (conf: ConfigProvider) extends JettyServer wi
   }
 
   private def createServer = {
-    new Server(conf.serverPort)
+    new Server(serverPort)
   }
 
   private def createContextsOfTheServer = {
@@ -65,7 +72,7 @@ class DefaultJettyServer @Inject() (conf: ConfigProvider) extends JettyServer wi
   private def createContextSwaggerUi: WebAppContext = {
     val contextSwaggerUi = new WebAppContext()
     contextSwaggerUi.setContextPath(contextPathBase + "/docs")
-    contextSwaggerUi.setResourceBase(conf.swaggerPath)
+    contextSwaggerUi.setResourceBase(swaggerPath)
     contextSwaggerUi
   }
 }

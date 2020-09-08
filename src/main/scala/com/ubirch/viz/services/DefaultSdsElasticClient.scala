@@ -1,18 +1,19 @@
 package com.ubirch.viz.services
 
-import com.sksamuel.elastic4s.http.{ ElasticClient, ElasticProperties, Response }
-import com.sksamuel.elastic4s.http.search.SearchResponse
-import com.sksamuel.elastic4s.http.ElasticDsl._
-import com.sksamuel.elastic4s.IndexAndType
-import com.sksamuel.elastic4s.http.index.IndexResponse
+import com.sksamuel.elastic4s.{ ElasticClient, ElasticProperties, Index, Response }
+import com.sksamuel.elastic4s.http.{ JavaClient, NoOpRequestConfigCallback }
+import com.sksamuel.elastic4s.ElasticDsl._
+import com.sksamuel.elastic4s.requests.indexes.IndexResponse
+import com.sksamuel.elastic4s.requests.searches.SearchResponse
+import com.typesafe.config.Config
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.config.ConfigProvider
+import com.ubirch.viz.config.ConfPaths.EsPaths
 import javax.inject.{ Inject, Singleton }
 import org.apache.http.auth.{ AuthScope, UsernamePasswordCredentials }
-import org.apache.http.client.config.RequestConfig.Builder
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.impl.nio.client.HttpAsyncClientBuilder
-import org.elasticsearch.client.RestClientBuilder.{ HttpClientConfigCallback, RequestConfigCallback }
+import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback
 
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
@@ -30,29 +31,27 @@ trait SdsElasticClient {
     */
   def getLastDeviceData(deviceId: String): Future[Response[SearchResponse]]
 
+  def getDeviceDataInTimerange(deviceUuid: String, from: String, to: String): Future[Response[SearchResponse]]
+
 }
 
 @Singleton
-class DefaultSdsElasticClient @Inject() (config: ConfigProvider) extends SdsElasticClient with LazyLogging {
+class DefaultSdsElasticClient @Inject() (config: Config) extends SdsElasticClient with LazyLogging with EsPaths {
 
-  lazy val provider: BasicCredentialsProvider = {
-    val provider = new BasicCredentialsProvider
-    val credentials = new UsernamePasswordCredentials(config.username, config.password)
-    provider.setCredentials(AuthScope.ANY, credentials)
-    provider
+  val callback = new HttpClientConfigCallback {
+    override def customizeHttpClient(httpClientBuilder: HttpAsyncClientBuilder): HttpAsyncClientBuilder = {
+      val credentialsProvider = new BasicCredentialsProvider()
+      val credentials = new UsernamePasswordCredentials(config.getString(ES_IO_USER), config.getString(ES_PASSWORD))
+      credentialsProvider.setCredentials(AuthScope.ANY, credentials)
+      httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider)
+    }
   }
 
-  val client = ElasticClient(ElasticProperties(config.host + ":" + config.elasticPort), new RequestConfigCallback {
-    override def customizeRequestConfig(requestConfigBuilder: Builder): Builder = {
-      requestConfigBuilder
-    }
-  }, new HttpClientConfigCallback {
-    override def customizeHttpClient(httpClientBuilder: HttpAsyncClientBuilder): HttpAsyncClientBuilder = {
-      httpClientBuilder.setDefaultCredentialsProvider(provider)
-    }
-  })
+  val props = ElasticProperties(config.getString(ES_PROTOCOL) + "://" + config.getString(ES_HOST) + ":" + config.getInt(ES_PORT))
 
-  lazy val indexType = IndexAndType(config.elasticIndex, "doc")
+  val client = ElasticClient(JavaClient(props, requestConfigCallback = NoOpRequestConfigCallback, httpClientConfigCallback = callback))
+
+  lazy val indexType = Index(config.getString(ES_INDEX)) //IndexAndType(config.elasticIndex, "doc")
 
   def storeDeviceData(jsonData: String): Future[Response[IndexResponse]] = {
     val res = client.execute {
@@ -69,11 +68,24 @@ class DefaultSdsElasticClient @Inject() (config: ConfigProvider) extends SdsElas
 
   def getLastDeviceData(deviceUuid: String): Future[Response[SearchResponse]] = {
     client.execute {
-      searchWithType(indexType)
+      //searchWithType(indexType)
+      search(indexType)
         .size(1)
         .sortByFieldDesc("timestamp")
         .query(boolQuery()
           .must(s"""uuid("$deviceUuid")"""))
+    }
+  }
+
+  def getDeviceDataInTimerange(deviceUuid: String, from: String, to: String): Future[Response[SearchResponse]] = {
+    client.execute {
+      //searchWithType(indexType)
+      search(indexType)
+        .sortByFieldDesc("timestamp")
+        //.query(rangeQuery("timestamp").gte(from).lte(to))
+        .query(boolQuery()
+          .must(s"""uuid("$deviceUuid")""")
+          .filter(rangeQuery("timestamp").gte(from).lte(to)))
     }
   }
 
