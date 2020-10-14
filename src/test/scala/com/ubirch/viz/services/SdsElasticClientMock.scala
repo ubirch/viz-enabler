@@ -14,4 +14,7 @@ class SdsElasticClientMock extends SdsElasticClient with MockitoSugar {
   override def getLastDeviceData(deviceId: String): Future[Response[SearchResponse]] = Future.successful(mock[Response[SearchResponse]])
 
   override def getDeviceDataInTimerange(deviceUuid: String, from: String, to: String): Future[Response[SearchResponse]] = Future.successful(mock[Response[SearchResponse]])
+
+  override def getLastNDeviceData(deviceUuid: String, n: Int): Future[Response[SearchResponse]] = Future.successful(mock[Response[SearchResponse]])
+
 }
