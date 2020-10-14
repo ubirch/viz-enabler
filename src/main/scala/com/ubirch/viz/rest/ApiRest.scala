@@ -134,6 +134,28 @@ class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient
     ElasticUtil.parseMultipleData(uuid, elasticResponse)
   }
 
+  val getLastNValues: SwaggerSupportSyntax.OperationBuilder =
+    (apiOperation[String]("getLastNValues")
+      summary "Get the last n messages sent by a device."
+      description "Get the last n payload sent by a device.\n" +
+      "Will only return a maximum of 100 values.\n" +
+      "If the device sent less than the required amount of values, it'll return the maximum possible."
+      tags "send"
+      parameters (
+      pathParam[String]("n").
+        description("Number of payload desired. Capped to 100."),
+      hwDeviceIdHeaderSwagger,
+      passwordHeaderSwagger
+    ))
+
+  get("/lastValues/:n", operation(getMessageTimerange)) {
+    val uuid = request.getHeader(Elements.UBIRCH_ID_HEADER)
+    val number = params("n").toInt
+    logIncomingRoad(s"get(/lastValues/:$number/$uuid)")
+    val elasticResponse = elasticClient.getLastNDeviceData(uuid, number)
+    ElasticUtil.parseMultipleData(uuid, elasticResponse)
+  }
+
   private def writeInEs(payloadType: PayloadType): Future[Response[IndexResponse]] = {
     val payload = getPayload
     logIncomingRoad(s"post(/${payloadType.toString})", s"payload = $payload")

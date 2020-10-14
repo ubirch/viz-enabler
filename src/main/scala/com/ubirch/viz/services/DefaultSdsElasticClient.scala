@@ -32,6 +32,11 @@ trait SdsElasticClient {
 
   def getDeviceDataInTimerange(deviceUuid: String, from: String, to: String): Future[Response[SearchResponse]]
 
+  /**
+  * This method returns the last n elements stored by the device having the uuid deviceUuid
+    */
+  def getLastNDeviceData(deviceUuid: String, n: Int): Future[Response[SearchResponse]]
+
 }
 
 @Singleton
@@ -85,6 +90,20 @@ class DefaultSdsElasticClient @Inject() (config: Config) extends SdsElasticClien
         .query(boolQuery()
           .must(s"""uuid("$deviceUuid")""")
           .filter(rangeQuery("timestamp").gte(from).lte(to)))
+        .limit(100)
+    }
+  }
+
+
+  def getLastNDeviceData(deviceUuid: String, n: Int): Future[Response[SearchResponse]] = {
+    client.execute {
+      //searchWithType(indexType)
+      search(indexType)
+        .size(n)
+        .sortByFieldDesc("timestamp")
+        //.query(rangeQuery("timestamp").gte(from).lte(to))
+        .query(boolQuery()
+         .must(s"""uuid("$deviceUuid")"""))
         .limit(100)
     }
   }

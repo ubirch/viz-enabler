@@ -1,26 +1,31 @@
 package com.ubirch.viz.services
 
+import java.text.SimpleDateFormat
+import java.time.{LocalDate, ZoneId, ZoneOffset}
+import java.util.{Date, Random}
+
 import com.google.inject.binder.ScopedBindingBuilder
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
-import com.typesafe.config.{ Config, ConfigValueFactory }
+import com.typesafe.config.{Config, ConfigValueFactory}
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.{ Binder, InjectorHelper }
-import com.ubirch.viz.config.{ ConfigProvider, EsPaths }
+import com.ubirch.viz.{Binder, InjectorHelper}
+import com.ubirch.viz.config.{ConfigProvider, EsPaths}
 import com.ubirch.viz.config.ConfPaths.EsPaths
-import com.ubirch.viz.models.{ ElasticResponse, ElasticUtil }
-import com.ubirch.viz.models.payload.{ PayloadFactory, PayloadType }
-import org.apache.http.auth.{ AuthScope, UsernamePasswordCredentials }
+import com.ubirch.viz.models.{ElasticResponse, ElasticUtil}
+import com.ubirch.viz.models.payload.{Payload, PayloadFactory, PayloadType}
+import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.HttpHost
 import org.apache.http.util.EntityUtils
-import org.elasticsearch.client.{ Request, RestClient }
+import org.elasticsearch.client.{Request, RestClient}
 import org.json4s.jackson.JsonMethods._
-import org.json4s.{ DefaultFormats, NoTypeHints }
+import org.json4s.{DefaultFormats, NoTypeHints}
 import org.json4s.native.Serialization
-import org.scalatest.{ BeforeAndAfterEach, FeatureSpec, Matchers }
+import org.scalatest.{BeforeAndAfterEach, FeatureSpec, Matchers}
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 
-import scala.concurrent.{ Await, Future }
+import scala.collection.immutable
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
 
 class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matchers with BeforeAndAfterEach with EsPaths {
@@ -63,7 +68,10 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
   val defaultUUID = "55424952-3c71-bf88-20dc-3c71bf8820dc"
   val defaultTimestamp = "2019-10-05T07:56:14.187873Z"
 
+  val dateFormat = new SimpleDateFormat("yyyy-mm-dd'T'hh:mm:ss.SSSZ")
+
   val esClient: SdsElasticClient = Injector.get[SdsElasticClient]
+
   feature("send data to es") {
     scenario("json classic") {
       val payload = """{"uuid":"55424952-3c71-bf88-20dc-3c71bf8820dc","timestamp":"2019-09-30T11:59:40.000Z","data":{"L_red":97.0,"T":30.0,"AccY":0.01037598,"L_blue":64.0,"AccZ":1.017822,"AccX":-0.02722168,"V":4.772007,"P":99.75,"AccRoll":1.532012,"H":62.32504,"AccPitch":-0.5838608}}"""
@@ -210,6 +218,116 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
       treatedRes.responses.size shouldBe 4
     }
   }
+
+
+  feature("get last n values") {
+
+    val payload1 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:14.187873Z", "data": {"name": "hola1", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+    val payload2 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:15.197873Z", "data": {"name": "hola2", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+    val payload3 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:16.207873Z", "data": {"name": "hola3", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+    val payload4 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:17.217873Z", "data": {"name": "hola4", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+    val payload5 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:18.227873Z", "data": {"name": "hola5", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+
+
+    scenario("querying from valid uuid with multiple values should return the last one") {
+
+      val messages = PayloadFactory(payload1, PayloadType.Json).toMessage :: PayloadFactory(payload2, PayloadType.Json).toMessage :: PayloadFactory(payload3, PayloadType.Json).toMessage :: PayloadFactory(payload4, PayloadType.Json).toMessage :: PayloadFactory(payload5, PayloadType.Json).toMessage :: Nil
+
+      for (message <- messages) { esClient.storeDeviceData(message.toJson) }
+
+      Thread.sleep(DEFAULT_WAIT_TIME.toLong)
+      val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getLastNDeviceData("55424952-3c71-bf88-20dc-3c71bf8820dc", 1)
+
+      Await.result(res, 1.minute)
+
+      val treatedResFuture = ElasticUtil.parseMultipleData(defaultUUID, res)
+      val treatedRes = Await.result(treatedResFuture, 1.minute)
+
+      treatedRes.responses.size shouldBe 1
+      treatedRes.responses.head.timestamp.get.getTime shouldBe 1570262178000L
+    }
+
+    scenario("querying from valid uuid with multiple values should return the last 3 ones") {
+
+      val messages = PayloadFactory(payload1, PayloadType.Json).toMessage :: PayloadFactory(payload2, PayloadType.Json).toMessage :: PayloadFactory(payload3, PayloadType.Json).toMessage :: PayloadFactory(payload4, PayloadType.Json).toMessage :: PayloadFactory(payload5, PayloadType.Json).toMessage :: Nil
+
+      for (message <- messages) { esClient.storeDeviceData(message.toJson) }
+
+      Thread.sleep(DEFAULT_WAIT_TIME.toLong)
+      val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getLastNDeviceData("55424952-3c71-bf88-20dc-3c71bf8820dc", 3)
+
+      Await.result(res, 1.minute)
+
+      val treatedResFuture = ElasticUtil.parseMultipleData(defaultUUID, res)
+      val treatedRes = Await.result(treatedResFuture, 1.minute)
+
+      treatedRes.responses.size shouldBe 3
+      treatedRes.responses.map(x => x.timestamp.get.getTime).sorted shouldBe List(1570262178000L, 1570262177000L, 1570262176000L).sorted
+
+      // treatedRes.responses.head.timestamp.get.getTime shouldBe 1570262178000L
+    }
+
+    scenario("querying from valid uuid with multiple values should return all of them if asking for more") {
+
+      val messages = PayloadFactory(payload1, PayloadType.Json).toMessage :: PayloadFactory(payload2, PayloadType.Json).toMessage :: PayloadFactory(payload3, PayloadType.Json).toMessage :: PayloadFactory(payload4, PayloadType.Json).toMessage :: PayloadFactory(payload5, PayloadType.Json).toMessage :: Nil
+
+      for (message <- messages) { esClient.storeDeviceData(message.toJson) }
+
+      Thread.sleep(DEFAULT_WAIT_TIME.toLong)
+      val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getLastNDeviceData("55424952-3c71-bf88-20dc-3c71bf8820dc", 10)
+
+      Await.result(res, 1.minute)
+
+      val treatedResFuture = ElasticUtil.parseMultipleData(defaultUUID, res)
+      val treatedRes = Await.result(treatedResFuture, 1.minute)
+
+      treatedRes.responses.size shouldBe 5
+
+      // treatedRes.responses.head.timestamp.get.getTime shouldBe 1570262178000L
+    }
+
+    scenario("Should only return a maximum of 100") {
+
+      def randomDate: String = {
+        val from = LocalDate.of(1000, 3, 1)
+        val to = LocalDate.of(2020, 6, 1)
+        val diff = java.time.temporal.ChronoUnit.DAYS.between(from, to)
+        val random = new Random(System.nanoTime) // You may want a different seed
+        val newDate = from.plusDays(random.nextInt(diff.toInt))
+        val date = Date.from(newDate.atStartOfDay(ZoneOffset.UTC).toInstant)
+        val strDate = dateFormat.format(date).dropRight(5) + 'Z'
+        strDate.replace("-00-", "-03-")
+      }
+
+      def generateRandomValues(number: Int) = {
+        val res = for (_ <- 0 until number) yield  {
+          val ts = randomDate
+          val accZ = scala.util.Random.nextFloat().toString
+          val text = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "$TS", "data": {"name": "hola1", "AccZ": $ACCZ, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+          val res = text.replace("$TS", ts).replace("$ACCZ", accZ)
+          res
+        }
+        res.toSeq
+      }
+
+      val valuesToIndex = generateRandomValues(300).map(x => PayloadFactory(x, PayloadType.Json).toMessage).toList
+
+      for (message <- valuesToIndex) { esClient.storeDeviceData(message.toJson) }
+
+
+      Thread.sleep(DEFAULT_WAIT_TIME.toLong)
+      val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getLastNDeviceData("55424952-3c71-bf88-20dc-3c71bf8820dc", 10)
+
+      Await.result(res, 1.minute)
+
+      val treatedResFuture = ElasticUtil.parseMultipleData(defaultUUID, res)
+      val treatedRes = Await.result(treatedResFuture, 1.minute)
+
+      treatedRes.responses.size shouldBe 100
+
+    }
+  }
+
   /**
     * Simple injector that replaces the kafka bootstrap server and topics to the given ones
     */
