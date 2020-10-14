@@ -316,7 +316,7 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
 
 
       Thread.sleep(DEFAULT_WAIT_TIME.toLong)
-      val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getLastNDeviceData("55424952-3c71-bf88-20dc-3c71bf8820dc", 10)
+      val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getLastNDeviceData("55424952-3c71-bf88-20dc-3c71bf8820dc", 100)
 
       Await.result(res, 1.minute)
 

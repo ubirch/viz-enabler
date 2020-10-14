@@ -96,15 +96,14 @@ class DefaultSdsElasticClient @Inject() (config: Config) extends SdsElasticClien
 
 
   def getLastNDeviceData(deviceUuid: String, n: Int): Future[Response[SearchResponse]] = {
+    val sizeQuery = if (n <= 100) n else 100
+    println(sizeQuery)
     client.execute {
-      //searchWithType(indexType)
       search(indexType)
-        .size(n)
+        .size(sizeQuery)
         .sortByFieldDesc("timestamp")
-        //.query(rangeQuery("timestamp").gte(from).lte(to))
         .query(boolQuery()
          .must(s"""uuid("$deviceUuid")"""))
-        .limit(100)
     }
   }
 
