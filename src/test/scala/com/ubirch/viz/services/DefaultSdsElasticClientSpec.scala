@@ -129,8 +129,9 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
 
       val mapShouldBe: List[(String, String)] = parse("""{"name": "hola", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}""").extract[Map[String, String]].toList.sorted
 
-      val mapIs: List[(String, String)] = treatedRes.value.toList.sorted.map(x => (x._1, String.valueOf(x._2)))
-
+      val mapIs: List[(String, String)] = treatedRes.data.toList.sorted.map(x => (x._1, String.valueOf(x._2)))
+      
+      treatedRes.msg_type shouldBe 0
       mapIs shouldBe mapShouldBe
       treatedRes.uuid shouldBe defaultUUID
 
@@ -161,7 +162,7 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
       val treatedRes = Await.result(treatedResFuture, 1.minute)
 
       val mapShouldBe = parse("""{"name": "hola5", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}""").extract[Map[String, String]].toList.sorted
-      val mapIs: List[(String, String)] = treatedRes.value.toList.sorted.map(x => (x._1, String.valueOf(x._2)))
+      val mapIs: List[(String, String)] = treatedRes.data.toList.sorted.map(x => (x._1, String.valueOf(x._2)))
 
       mapIs shouldBe mapShouldBe
       treatedRes.uuid shouldBe defaultUUID
@@ -175,8 +176,8 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
 
       treatedRes.uuid shouldBe defaultUUID
       treatedRes.timestamp shouldBe None
-      treatedRes.value.head._1 shouldBe "errorMessage"
-      treatedRes.value.head._2.contains("Error getting value from elasticsearch: ElasticError(search_phase_execution_exception,all shards failed,None,None,None,List(ElasticError(query_shard_exception,No mapping found for [timestamp] in order to sort on") shouldBe true
+      treatedRes.data.head._1 shouldBe "errorMessage"
+      treatedRes.data.head._2.contains("Error getting value from elasticsearch: ElasticError(search_phase_execution_exception,all shards failed,None,None,None,List(ElasticError(query_shard_exception,No mapping found for [timestamp] in order to sort on") shouldBe true
     }
 
     scenario("querying from valid uuid with no values should return empty string") {
@@ -244,7 +245,7 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
       val treatedRes = Await.result(treatedResFuture, 1.minute)
 
       treatedRes.responses.size shouldBe 1
-      treatedRes.responses.head.timestamp.get.getTime shouldBe 1570262178000L
+      treatedRes.responses.head.timestamp.get shouldBe 1570262178L
     }
 
     scenario("querying from valid uuid with multiple values should return the last 3 ones") {
@@ -262,7 +263,7 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
       val treatedRes = Await.result(treatedResFuture, 1.minute)
 
       treatedRes.responses.size shouldBe 3
-      treatedRes.responses.map(x => x.timestamp.get.getTime).sorted shouldBe List(1570262178000L, 1570262177000L, 1570262176000L).sorted
+      treatedRes.responses.map(x => x.timestamp.get).sorted shouldBe List(1570262178L, 1570262177L, 1570262176L).sorted
 
       // treatedRes.responses.head.timestamp.get.getTime shouldBe 1570262178000L
     }

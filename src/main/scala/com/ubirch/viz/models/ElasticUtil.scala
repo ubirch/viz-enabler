@@ -24,8 +24,12 @@ object ElasticUtil extends LazyLogging {
         r.result.hits.hits match {
           case Array(hit, _*) =>
             val maybeData = hit.sourceAsMap.get("data")
+            val maybeMsgType = hit.sourceAsMap.get("msg_type") match {
+              case Some(value) => value.asInstanceOf[Int]
+              case None => -1
+            }
             val maybeTimestamp = hit.sourceAsMap.get("timestamp") match {
-              case Some(timestamp) => Some(DateTime.parse(timestamp.asInstanceOf[String]).toDate)
+              case Some(timestamp) => Some(DateTime.parse(timestamp.asInstanceOf[String]).getMillis / 1000)
               case None => None
             }
             maybeData match {
@@ -33,7 +37,8 @@ object ElasticUtil extends LazyLogging {
                 ElasticResponse(
                   uuid = uuid,
                   timestamp = maybeTimestamp,
-                  value = data.asInstanceOf[Map[String, String]]
+                  data = data.asInstanceOf[Map[String, String]],
+                  msg_type = maybeMsgType
                 )
               case Some(badlyFormattedData) =>
                 ElasticResponse(uuid = uuid, timestamp = maybeTimestamp)
@@ -76,16 +81,21 @@ object ElasticUtil extends LazyLogging {
     hits match {
       case ::(hit, tl) =>
         val maybeData = hit.sourceAsMap.get("data")
+        val maybeMsgType = hit.sourceAsMap.get("msg_type") match {
+          case Some(value) => value.asInstanceOf[Int]
+          case None => -1
+        }
         val maybeTimestamp = hit.sourceAsMap.get("timestamp") match {
-          case Some(timestamp) => Some(DateTime.parse(timestamp.asInstanceOf[String]).toDate)
+          case Some(timestamp) => Some(DateTime.parse(timestamp.asInstanceOf[String]).getMillis / 1000)
           case None => None
         }
         val newResponse = maybeData match {
-          case Some(data: Map[_, _]) =>
+          case Some(foundData: Map[_, _]) =>
             ElasticResponse(
               uuid = uuid,
               timestamp = maybeTimestamp,
-              value = data.asInstanceOf[Map[String, String]]
+              data = foundData.asInstanceOf[Map[String, String]],
+              msg_type = maybeMsgType
             )
           case Some(badlyFormattedData) =>
             ElasticResponse(uuid = uuid, timestamp = maybeTimestamp)
@@ -100,10 +110,11 @@ object ElasticUtil extends LazyLogging {
   }
 }
 
-case class ElasticResponse(uuid: String, timestamp: Option[Date] = None, value: Map[String, String] = Map.empty) {
-  def withTime(time: Option[Date]): ElasticResponse = copy(timestamp = time)
-  def withValue(newValue: Map[String, String]): ElasticResponse = copy(value = newValue)
-  def withErrorMessage(error: String): ElasticResponse = copy(value = value ++ Map("errorMessage" -> error))
+case class ElasticResponse(uuid: String, timestamp: Option[Long] = None, data: Map[String, String] = Map.empty, msg_type: Int = -1) {
+  def withTime(time: Option[Long]): ElasticResponse = copy(timestamp = time)
+  def withValue(newValue: Map[String, String]): ElasticResponse = copy(data = newValue)
+  def withErrorMessage(error: String): ElasticResponse = copy(data = data ++ Map("errorMessage" -> error))
+  def withMessageType(msgType: Int): ElasticResponse = copy(msg_type = msgType)
 }
 
 case class ElasticResponses(responses: List[ElasticResponse] = Nil) {
