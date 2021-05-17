@@ -90,7 +90,6 @@
         <scalatra.version>2.6.5</scalatra.version>
         <scalactic.version>3.0.5</scalactic.version>
         <scalatraSwagger.version>2.6.5</scalatraSwagger.version>
-        <javaxServlet.version>3.1.0</javaxServlet.version>
 
         <!-- Json -->
         <json4s.version>3.6.9</json4s.version> <!-- Scalatra DOES NOT work with a json4s prior to 3.6.7 -->
@@ -121,7 +120,7 @@
         <maven-deploy-plugin.version>2.8.2</maven-deploy-plugin.version>
         <dockerfile-maven-plugin.version>1.4.4</dockerfile-maven-plugin.version>
 
-        <jetty-servlets.version>9.4.19.v20190610</jetty-servlets.version>
+        <jetty-servlets.version>9.4.40.v20210413</jetty-servlets.version>
 
         <guice.version>4.1.0</guice.version>
 
@@ -201,13 +200,6 @@
             <groupId>org.scalatra</groupId>
             <artifactId>scalatra-swagger_${scala.compat.version}</artifactId>
             <version>${scalatraSwagger.version}</version>
-        </dependency>
-
-        <!-- Javax servlet -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>${javaxServlet.version}</version>
         </dependency>
 
         <!-- Json4s -->

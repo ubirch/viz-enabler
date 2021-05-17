@@ -5,7 +5,7 @@ import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.config.ConfPaths.ServerPaths
 import com.ubirch.viz.models.Elements
 import javax.inject.Inject
-import org.eclipse.jetty.server.{ Handler, Server }
+import org.eclipse.jetty.server.{Handler, HttpConnectionFactory, Server}
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
 import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.webapp.WebAppContext
@@ -24,8 +24,18 @@ class DefaultJettyServer @Inject() (conf: Config) extends JettyServer with LazyL
 
   val contextPathBase: String = serverBaseUrl + "/" + appVersion
 
+  def disableServerVersionHeader(server: Server): Unit = {
+    server.getConnectors.foreach { connector =>
+      connector.getConnectionFactories
+        .stream()
+        .filter(cf => cf.isInstanceOf[HttpConnectionFactory])
+        .forEach(cf => cf.asInstanceOf[HttpConnectionFactory].getHttpConfiguration.setSendServerVersion(false))
+    }
+  }
+
   private def initializeServer: Server = {
     val server = createServer
+    disableServerVersionHeader(server)
     val contexts = createContextsOfTheServer
     server.setHandler(contexts)
     server

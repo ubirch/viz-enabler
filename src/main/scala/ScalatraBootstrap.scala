@@ -11,8 +11,9 @@ class ScalatraBootstrap extends LifeCycle {
   lazy val resourceApp: ResourcesApp = Service.get[ResourcesApp]
 
   override def init(context: ServletContext): Unit = {
-    context.initParameters("org.scalatra.cors.preflightMaxAge") = "5"
-    context.initParameters("org.scalatra.cors.allowCredentials") = "false"
+    context.setInitParameter("org.scalatra.cors.preflightMaxAge", "5")
+    context.setInitParameter("org.scalatra.cors.allowCredentials", "false")
+    context.setInitParameter("org.scalatra.environment", "production")
 
     context.mount(restApi, "/", "RestApi")
     context.mount(resourceApp, "/api-docs")
