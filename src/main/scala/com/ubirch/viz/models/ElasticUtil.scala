@@ -1,7 +1,5 @@
 package com.ubirch.viz.models
 
-import java.util.Date
-
 import com.sksamuel.elastic4s.Response
 import com.sksamuel.elastic4s.requests.searches.{ SearchHit, SearchResponse }
 import com.typesafe.scalalogging.LazyLogging

@@ -5,7 +5,7 @@ import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.config.ConfPaths.ServerPaths
 import com.ubirch.viz.models.Elements
 import javax.inject.Inject
-import org.eclipse.jetty.server.{Handler, HttpConnectionFactory, Server}
+import org.eclipse.jetty.server.{ Handler, HttpConnectionFactory, Server }
 import org.eclipse.jetty.server.handler.ContextHandlerCollection
 import org.eclipse.jetty.servlet.DefaultServlet
 import org.eclipse.jetty.webapp.WebAppContext

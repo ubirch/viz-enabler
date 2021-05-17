@@ -33,7 +33,7 @@ trait SdsElasticClient {
   def getDeviceDataInTimerange(deviceUuid: String, from: String, to: String): Future[Response[SearchResponse]]
 
   /**
-  * This method returns the last n elements stored by the device having the uuid deviceUuid
+    * This method returns the last n elements stored by the device having the uuid deviceUuid
     */
   def getLastNDeviceData(deviceUuid: String, n: Int): Future[Response[SearchResponse]]
 
@@ -94,7 +94,6 @@ class DefaultSdsElasticClient @Inject() (config: Config) extends SdsElasticClien
     }
   }
 
-
   def getLastNDeviceData(deviceUuid: String, n: Int): Future[Response[SearchResponse]] = {
     val sizeQuery = if (n <= 100) n else 100
     println(sizeQuery)
@@ -103,7 +102,7 @@ class DefaultSdsElasticClient @Inject() (config: Config) extends SdsElasticClien
         .size(sizeQuery)
         .sortByFieldDesc("timestamp")
         .query(boolQuery()
-         .must(s"""uuid("$deviceUuid")"""))
+          .must(s"""uuid("$deviceUuid")"""))
     }
   }
 

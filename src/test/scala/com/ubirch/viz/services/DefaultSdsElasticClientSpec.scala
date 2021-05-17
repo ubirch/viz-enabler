@@ -1,31 +1,31 @@
 package com.ubirch.viz.services
 
 import java.text.SimpleDateFormat
-import java.time.{LocalDate, ZoneId, ZoneOffset}
-import java.util.{Date, Random}
+import java.time.{ LocalDate, ZoneId, ZoneOffset }
+import java.util.{ Date, Random }
 
 import com.google.inject.binder.ScopedBindingBuilder
 import com.sksamuel.elastic4s.requests.searches.SearchResponse
-import com.typesafe.config.{Config, ConfigValueFactory}
+import com.typesafe.config.{ Config, ConfigValueFactory }
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.{Binder, InjectorHelper}
-import com.ubirch.viz.config.{ConfigProvider, EsPaths}
+import com.ubirch.viz.{ Binder, InjectorHelper }
+import com.ubirch.viz.config.{ ConfigProvider, EsPaths }
 import com.ubirch.viz.config.ConfPaths.EsPaths
-import com.ubirch.viz.models.{ElasticResponse, ElasticUtil}
-import com.ubirch.viz.models.payload.{Payload, PayloadFactory, PayloadType}
-import org.apache.http.auth.{AuthScope, UsernamePasswordCredentials}
+import com.ubirch.viz.models.{ ElasticResponse, ElasticUtil }
+import com.ubirch.viz.models.payload.{ Payload, PayloadFactory, PayloadType }
+import org.apache.http.auth.{ AuthScope, UsernamePasswordCredentials }
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.HttpHost
 import org.apache.http.util.EntityUtils
-import org.elasticsearch.client.{Request, RestClient}
+import org.elasticsearch.client.{ Request, RestClient }
 import org.json4s.jackson.JsonMethods._
-import org.json4s.{DefaultFormats, NoTypeHints}
+import org.json4s.{ DefaultFormats, NoTypeHints }
 import org.json4s.native.Serialization
-import org.scalatest.{BeforeAndAfterEach, FeatureSpec, Matchers}
+import org.scalatest.{ BeforeAndAfterEach, FeatureSpec, Matchers }
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 
 import scala.collection.immutable
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
 
 class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matchers with BeforeAndAfterEach with EsPaths {
@@ -130,7 +130,7 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
       val mapShouldBe: List[(String, String)] = parse("""{"name": "hola", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}""").extract[Map[String, String]].toList.sorted
 
       val mapIs: List[(String, String)] = treatedRes.data.toList.sorted.map(x => (x._1, String.valueOf(x._2)))
-      
+
       treatedRes.msg_type shouldBe 0
       mapIs shouldBe mapShouldBe
       treatedRes.uuid shouldBe defaultUUID
@@ -220,7 +220,6 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
     }
   }
 
-
   feature("get last n values") {
 
     val payload1 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:14.187873Z", "data": {"name": "hola1", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
@@ -228,7 +227,6 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
     val payload3 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:16.207873Z", "data": {"name": "hola3", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
     val payload4 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:17.217873Z", "data": {"name": "hola4", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
     val payload5 = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "2019-10-05T07:56:18.227873Z", "data": {"name": "hola5", "AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
-
 
     scenario("querying from valid uuid with multiple values should return the last one") {
 
@@ -301,7 +299,7 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
       }
 
       def generateRandomValues(number: Int) = {
-        val res = for (_ <- 0 until number) yield  {
+        val res = for (_ <- 0 until number) yield {
           val ts = randomDate
           val accZ = scala.util.Random.nextFloat().toString
           val text = """{"uuid": "55424952-3c71-bf88-20dc-3c71bf8820dc", "timestamp": "$TS", "data": {"name": "hola1", "AccZ": $ACCZ, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
@@ -314,7 +312,6 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
       val valuesToIndex = generateRandomValues(300).map(x => PayloadFactory(x, PayloadType.Json).toMessage).toList
 
       for (message <- valuesToIndex) { esClient.storeDeviceData(message.toJson) }
-
 
       Thread.sleep(DEFAULT_WAIT_TIME.toLong)
       val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getLastNDeviceData("55424952-3c71-bf88-20dc-3c71bf8820dc", 100)

@@ -142,11 +142,11 @@ class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient
       "If the device sent less than the required amount of values, it'll return the maximum possible."
       tags "send"
       parameters (
-      pathParam[String]("n").
+        pathParam[String]("n").
         description("Number of payload desired. Capped to 100."),
-      hwDeviceIdHeaderSwagger,
-      passwordHeaderSwagger
-    ))
+        hwDeviceIdHeaderSwagger,
+        passwordHeaderSwagger
+      ))
 
   get("/lastValues/:n", operation(getMessageTimerange)) {
     val uuid = request.getHeader(Elements.UBIRCH_ID_HEADER)

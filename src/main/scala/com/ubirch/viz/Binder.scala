@@ -16,11 +16,12 @@ class Binder extends AbstractModule {
   def Config: ScopedBindingBuilder = bind(classOf[Config]).toProvider(classOf[ConfigProvider])
   def Swagger: ScopedBindingBuilder = bind(classOf[Swagger]).to(classOf[ApiSwagger])
 
-  def configure(): Unit = {
+  override def configure(): Unit = {
     ElasticClient
     Config
     AuthClient
     Swagger
+    ()
   }
 
 }
