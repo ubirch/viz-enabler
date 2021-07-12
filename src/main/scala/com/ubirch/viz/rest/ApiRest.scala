@@ -8,7 +8,9 @@ import com.ubirch.viz.models.{ ElasticUtil, Elements }
 import com.ubirch.viz.models.message.{ Message, MessageTypeZero }
 import com.ubirch.viz.models.payload.{ PayloadFactory, PayloadType }
 import com.ubirch.viz.models.payload.PayloadType.PayloadType
+import com.ubirch.viz.rest.concerns.BearerAuthRequest
 import com.ubirch.viz.services.SdsElasticClient
+
 import javax.inject.{ Inject, Singleton }
 import org.json4s.{ DefaultFormats, Formats }
 import org.json4s.JsonDSL._
@@ -17,6 +19,7 @@ import org.scalatra.swagger.{ Swagger, SwaggerSupport, SwaggerSupportSyntax }
 import org.scalatra.{ CorsSupport, FutureSupport, ScalatraServlet }
 
 import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future }
+import scala.util.Try
 
 @Singleton
 class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient, val swagger: Swagger) extends ScalatraServlet
@@ -193,11 +196,20 @@ class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient
   private def stopIfNotAuthorized(): Unit = {
     logger.debug("checking device auth")
 
-    val keyCloakAuthenticationResponse = authClient.createRequestAndGetAuthorizationResponse(request)
-    if (!authClient.isAuthorisationCodeCorrect(keyCloakAuthenticationResponse)) {
-      logger.warn(s"Device not authorized")
-      halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, keyCloakAuthenticationResponse.body))
+    def keycloak(): Unit = {
+      val keyCloakAuthenticationResponse = authClient.createRequestAndGetAuthorizationResponse(request)
+      if (!authClient.isAuthorisationCodeCorrect(keyCloakAuthenticationResponse)) {
+        logger.warn(s"Device not authorized")
+        halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, keyCloakAuthenticationResponse.body))
+      }
     }
+
+    Try(keycloak()).recoverWith {
+      case e: Exception =>
+        logger.debug("Starting new strategy -> ", e.getMessage)
+        authClient.fromUbirchToken(request)
+    }.get
+
   }
 
   private def stopIfUuidsAreDifferent(message: Message): Unit = {
