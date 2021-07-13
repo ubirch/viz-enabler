@@ -1,6 +1,6 @@
 package com.ubirch.viz.rest.concerns
 
-import java.util.Locale
+import java.util.{ Locale, UUID }
 
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.api.Claims
@@ -54,6 +54,16 @@ object BearerAuthRequest extends Control with LazyLogging {
       claims.targetIdentities match {
         case Left(List(deviceId)) =>
           TokenApi.externalStateVerifySync(claims.token, deviceId)(timeout).toTry
+        case Right(_) => halt(400, "Bad Request")
+      }
+    }
+  }
+
+  def deviceIdVerification(request: HttpServletRequest, deviceIdFromBody: UUID): Try[Boolean] = {
+    BearerAuthRequest.authSystems(request).flatMap { claims =>
+      claims.targetIdentities match {
+        case Left(List(deviceId)) =>
+          Try(deviceId == deviceIdFromBody)
         case Right(_) => halt(400, "Bad Request")
       }
     }

@@ -1,5 +1,7 @@
 package com.ubirch.viz.rest
 
+import java.util.UUID
+
 import com.sksamuel.elastic4s.Response
 import com.sksamuel.elastic4s.requests.indexes.IndexResponse
 import com.typesafe.scalalogging.LazyLogging
@@ -8,6 +10,7 @@ import com.ubirch.viz.models.message.{ Message, MessageTypeZero }
 import com.ubirch.viz.models.payload.PayloadType.PayloadType
 import com.ubirch.viz.models.payload.{ PayloadFactory, PayloadType }
 import com.ubirch.viz.models.{ ElasticUtil, Elements }
+import com.ubirch.viz.rest.concerns.BearerAuthRequest
 import com.ubirch.viz.services.SdsElasticClient
 import org.json4s.JsonDSL._
 import org.json4s.{ DefaultFormats, Formats }
@@ -199,7 +202,7 @@ class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient
 
     val isCredentialsBasedAuth = request.header(Elements.UBIRCH_ID_HEADER).isDefined && request.header(Elements.UBIRCH_PASSWORD_HEADER).isDefined
 
-    def keycloak(): Unit = {
+    def default(): Unit = {
       val keyCloakAuthenticationResponse = authClient.createRequestAndGetAuthorizationResponse(request)
       if (!authClient.isAuthorisationCodeCorrect(keyCloakAuthenticationResponse)) {
         logger.warn(s"Device not authorized")
@@ -207,16 +210,37 @@ class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient
       }
     }
 
-    if (isCredentialsBasedAuth) keycloak()
-    else authClient.fromUbirchToken(request).get
+    def ubirchToken(): Unit = {
+      if (!authClient.fromUbirchToken(request).get) {
+        logger.warn(s"Device not authorized")
+        halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, "Validation failed"))
+      }
+    }
+
+    if (isCredentialsBasedAuth) default() else ubirchToken()
 
   }
 
   private def stopIfUuidsAreDifferent(message: Message): Unit = {
-    if (!message.isSameUuid(request.getHeader(Elements.UBIRCH_ID_HEADER))) {
-      logger.warn(s"""{"WARN": "UUIDs in header and payload different"}""")
-      halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, Elements.MESSAGE_ERROR_DIFFERENT_UUID))
+
+    val isCredentialsBasedAuth = request.header(Elements.UBIRCH_ID_HEADER).isDefined && request.header(Elements.UBIRCH_PASSWORD_HEADER).isDefined
+
+    def default(): Unit = {
+      if (!message.isSameUuid(request.getHeader(Elements.UBIRCH_ID_HEADER))) {
+        logger.warn(s"""{"WARN": "UUIDs in header and payload different"}""")
+        halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, Elements.MESSAGE_ERROR_DIFFERENT_UUID))
+      }
     }
+
+    def ubirchToken(): Unit = {
+      if (!BearerAuthRequest.deviceIdVerification(request, UUID.fromString(message.uuid)).get) {
+        logger.warn(s"""{"WARN": "UUIDs in header and payload different"}""")
+        halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, Elements.MESSAGE_ERROR_DIFFERENT_UUID))
+      }
+    }
+
+    if (isCredentialsBasedAuth) default() else ubirchToken()
+
   }
 
   private def getPayload: String = {
