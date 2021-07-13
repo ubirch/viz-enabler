@@ -5,6 +5,7 @@ import org.joda.time.DateTimeZone
 object Elements {
   val UBIRCH_ID_HEADER = "X-Ubirch-Hardware-Id"
   val UBIRCH_PASSWORD_HEADER = "X-Ubirch-Credential"
+  val AUTHENTICATION_HEADER = "Authorization"
   val AUTHORIZATION_SUCCESS_CODE = 200
   val NOT_AUTHORIZED_CODE = 401
   val DEFAULT_ERROR_CODE = 400
