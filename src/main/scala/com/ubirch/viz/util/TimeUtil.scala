@@ -1,4 +1,4 @@
-package com.ubirch.viz.Util
+package com.ubirch.viz.util
 
 import java.time.ZonedDateTime
 

@@ -1,7 +1,7 @@
 package com.ubirch.viz.services
 
 import java.text.SimpleDateFormat
-import java.time.{ LocalDate, ZoneId, ZoneOffset }
+import java.time.{ LocalDate, ZoneOffset }
 import java.util.{ Date, Random }
 
 import com.google.inject.binder.ScopedBindingBuilder
@@ -12,7 +12,7 @@ import com.ubirch.viz.{ Binder, InjectorHelper }
 import com.ubirch.viz.config.{ ConfigProvider, EsPaths }
 import com.ubirch.viz.config.ConfPaths.EsPaths
 import com.ubirch.viz.models.{ ElasticResponse, ElasticUtil }
-import com.ubirch.viz.models.payload.{ Payload, PayloadFactory, PayloadType }
+import com.ubirch.viz.models.payload.{ PayloadFactory, PayloadType }
 import org.apache.http.auth.{ AuthScope, UsernamePasswordCredentials }
 import org.apache.http.impl.client.BasicCredentialsProvider
 import org.apache.http.HttpHost
@@ -24,7 +24,6 @@ import org.json4s.native.Serialization
 import org.scalatest.{ BeforeAndAfterEach, FeatureSpec, Matchers }
 import org.testcontainers.elasticsearch.ElasticsearchContainer
 
-import scala.collection.immutable
 import scala.concurrent.{ Await, Future }
 import scala.concurrent.duration._
 
@@ -211,7 +210,7 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
       Thread.sleep(DEFAULT_WAIT_TIME.toLong)
       val res: Future[com.sksamuel.elastic4s.Response[SearchResponse]] = esClient.getDeviceDataInTimerange("55424952-3c71-bf88-20dc-3c71bf8820dc", "2019-10-05T07:56:13Z", "2019-10-05T07:56:17Z")
 
-      val r3 = Await.result(res, 1.minute)
+      val _ = Await.result(res, 1.minute)
 
       val treatedResFuture = ElasticUtil.parseMultipleData(defaultUUID, res)
       val treatedRes = Await.result(treatedResFuture, 1.minute)
@@ -292,7 +291,7 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
         val to = LocalDate.of(2020, 6, 1)
         val diff = java.time.temporal.ChronoUnit.DAYS.between(from, to)
         val random = new Random(System.nanoTime) // You may want a different seed
-        val newDate = from.plusDays(random.nextInt(diff.toInt))
+        val newDate = from.plusDays(random.nextInt(diff.toInt).toLong)
         val date = Date.from(newDate.atStartOfDay(ZoneOffset.UTC).toInstant)
         val strDate = dateFormat.format(date).dropRight(5) + 'Z'
         strDate.replace("-00-", "-03-")
@@ -359,5 +358,6 @@ class DefaultSdsElasticClientSpec extends FeatureSpec with LazyLogging with Matc
   def purgeEmbeddedEsIndex(): Unit = {
     esMasterClient.performRequest(new Request("DELETE", s"/${conf.getString(ES_INDEX)}"))
     esMasterClient.performRequest(new Request("PUT", s"/${conf.getString(ES_INDEX)}"))
+    ()
   }
 }

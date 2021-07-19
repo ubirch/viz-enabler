@@ -3,10 +3,14 @@ package com.ubirch.viz.authentification
 import com.typesafe.config.Config
 import com.ubirch.viz.config.ConfPaths.ServerPaths
 import com.ubirch.viz.models.Elements
-import javax.inject.{ Inject, Singleton }
-import javax.servlet.http.HttpServletRequest
+import com.ubirch.viz.rest.concerns.BearerAuthRequest
 import scalaj.http
 import scalaj.http.{ Http, HttpResponse }
+
+import javax.inject.{ Inject, Singleton }
+import javax.servlet.http.HttpServletRequest
+import scala.concurrent.duration._
+import scala.util.Try
 
 trait AuthClient {
 
@@ -16,23 +20,29 @@ trait AuthClient {
 
   def isUserAuthorized(incomingRequest: HttpServletRequest): Boolean
 
+  def fromUbirchToken(incomingRequest: HttpServletRequest): Try[Boolean]
+
 }
 
 @Singleton
 class DefaultAuthClient @Inject() (conf: Config) extends AuthClient with ServerPaths {
 
-  def isUserAuthorized(incomingRequest: HttpServletRequest): Boolean = {
+  override def isUserAuthorized(incomingRequest: HttpServletRequest): Boolean = {
     val authenticationResponse = createRequestAndGetAuthorizationResponse(incomingRequest)
     isAuthorisationCodeCorrect(authenticationResponse)
   }
 
-  def createRequestAndGetAuthorizationResponse(incomingRequest: HttpServletRequest): http.HttpResponse[String] = {
+  override def createRequestAndGetAuthorizationResponse(incomingRequest: HttpServletRequest): http.HttpResponse[String] = {
     val authenticationRequestHeaders = createHeaders(incomingRequest)
     sendAndReceiveRequest(authenticationRequestHeaders)
   }
 
-  def isAuthorisationCodeCorrect(authenticationResponse: http.HttpResponse[String]): Boolean = {
+  override def isAuthorisationCodeCorrect(authenticationResponse: http.HttpResponse[String]): Boolean = {
     authenticationResponse.code.equals(Elements.AUTHORIZATION_SUCCESS_CODE)
+  }
+
+  override def fromUbirchToken(incomingRequest: HttpServletRequest): Try[Boolean] = {
+    BearerAuthRequest.verifyUbirchToken(incomingRequest)(10.seconds)
   }
 
   private def createHeaders(request: HttpServletRequest): Seq[(String, String)] = {

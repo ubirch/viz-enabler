@@ -3,6 +3,8 @@ package com.ubirch.viz.authentification
 import javax.servlet.http.HttpServletRequest
 import scalaj.http.HttpResponse
 
+import scala.util.Try
+
 class AuthClientMockAlwaysOk extends AuthClient {
 
   override def createRequestAndGetAuthorizationResponse(incomingRequest: HttpServletRequest): HttpResponse[String] = {
@@ -12,6 +14,9 @@ class AuthClientMockAlwaysOk extends AuthClient {
   override def isAuthorisationCodeCorrect(authenticationResponse: HttpResponse[String]): Boolean = true
 
   override def isUserAuthorized(incomingRequest: HttpServletRequest): Boolean = true
+
+  override def fromUbirchToken(incomingRequest: HttpServletRequest): Try[Boolean] = Try(true)
+
 }
 
 class AuthClientMockAlwaysNok extends AuthClient {
@@ -23,6 +28,8 @@ class AuthClientMockAlwaysNok extends AuthClient {
   override def isAuthorisationCodeCorrect(authenticationResponse: HttpResponse[String]): Boolean = false
 
   override def isUserAuthorized(incomingRequest: HttpServletRequest): Boolean = false
+
+  override def fromUbirchToken(incomingRequest: HttpServletRequest): Try[Boolean] = Try(false)
 
 }
 

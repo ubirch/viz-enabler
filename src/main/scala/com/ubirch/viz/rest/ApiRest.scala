@@ -1,21 +1,24 @@
 package com.ubirch.viz.rest
 
+import java.util.UUID
+
 import com.sksamuel.elastic4s.Response
 import com.sksamuel.elastic4s.requests.indexes.IndexResponse
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.authentification.AuthClient
-import com.ubirch.viz.models.{ ElasticUtil, Elements }
 import com.ubirch.viz.models.message.{ Message, MessageTypeZero }
-import com.ubirch.viz.models.payload.{ PayloadFactory, PayloadType }
 import com.ubirch.viz.models.payload.PayloadType.PayloadType
+import com.ubirch.viz.models.payload.{ PayloadFactory, PayloadType }
+import com.ubirch.viz.models.{ ElasticUtil, Elements }
+import com.ubirch.viz.rest.concerns.BearerAuthRequest
 import com.ubirch.viz.services.SdsElasticClient
-import javax.inject.{ Inject, Singleton }
-import org.json4s.{ DefaultFormats, Formats }
 import org.json4s.JsonDSL._
+import org.json4s.{ DefaultFormats, Formats }
 import org.scalatra.json.NativeJsonSupport
 import org.scalatra.swagger.{ Swagger, SwaggerSupport, SwaggerSupportSyntax }
 import org.scalatra.{ CorsSupport, FutureSupport, ScalatraServlet }
 
+import javax.inject.{ Inject, Singleton }
 import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future }
 
 @Singleton
@@ -46,12 +49,15 @@ class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient
     description("HardwareId of the device")
   val passwordHeaderSwagger: SwaggerSupportSyntax.ParameterBuilder[String] = headerParam[String](Elements.UBIRCH_PASSWORD_HEADER).
     description("Password of the device, base64 encoded")
+  val swaggerTokenAsHeader: SwaggerSupportSyntax.ParameterBuilder[String] = headerParam[String](Elements.AUTHENTICATION_HEADER)
+    .description("Token of the device (ubirch data token). ADD \"bearer \" followed by a space) BEFORE THE TOKEN OTHERWISE IT WON'T WORK")
 
   val postDataJson: SwaggerSupportSyntax.OperationBuilder =
     (apiOperation[String]("sendJson")
       summary "Send a JSON"
       schemes ("http", "https") // Force swagger ui to use http OR https, only need to say it once
-      description "Send a JSON message to the Ubirch Simple Data Service"
+      description "Send a JSON message to the Ubirch Simple Data Service. It supports password or ubirch token authentication. " +
+      "Either use device/password or ubirch data token"
       tags "send"
       parameters (
         bodyParam[MessageTypeZero]("payload").
@@ -59,8 +65,9 @@ class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient
           """Payload to be stored, json format. Should have this format:
             | {"uuid": uuid, "msg_type": 0,"timestamp": EPOCH_SECONDS, "data": Map[String, Double]}""".stripMargin
         ),
-          hwDeviceIdHeaderSwagger,
-          passwordHeaderSwagger
+          hwDeviceIdHeaderSwagger.optional,
+          passwordHeaderSwagger.optional,
+          swaggerTokenAsHeader.optional
       ))
 
   post("/json", operation(postDataJson)) {
@@ -193,18 +200,47 @@ class ApiRest @Inject() (elasticClient: SdsElasticClient, authClient: AuthClient
   private def stopIfNotAuthorized(): Unit = {
     logger.debug("checking device auth")
 
-    val keyCloakAuthenticationResponse = authClient.createRequestAndGetAuthorizationResponse(request)
-    if (!authClient.isAuthorisationCodeCorrect(keyCloakAuthenticationResponse)) {
-      logger.warn(s"Device not authorized")
-      halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, keyCloakAuthenticationResponse.body))
+    val isCredentialsBasedAuth = request.header(Elements.UBIRCH_ID_HEADER).isDefined && request.header(Elements.UBIRCH_PASSWORD_HEADER).isDefined
+
+    def default(): Unit = {
+      val keyCloakAuthenticationResponse = authClient.createRequestAndGetAuthorizationResponse(request)
+      if (!authClient.isAuthorisationCodeCorrect(keyCloakAuthenticationResponse)) {
+        logger.warn(s"Device not authorized")
+        halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, keyCloakAuthenticationResponse.body))
+      }
     }
+
+    def ubirchToken(): Unit = {
+      if (!authClient.fromUbirchToken(request).get) {
+        logger.warn(s"Device not authorized")
+        halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, "Validation failed"))
+      }
+    }
+
+    if (isCredentialsBasedAuth) default() else ubirchToken()
+
   }
 
   private def stopIfUuidsAreDifferent(message: Message): Unit = {
-    if (!message.isSameUuid(request.getHeader(Elements.UBIRCH_ID_HEADER))) {
-      logger.warn(s"""{"WARN": "UUIDs in header and payload different"}""")
-      halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, Elements.MESSAGE_ERROR_DIFFERENT_UUID))
+
+    val isCredentialsBasedAuth = request.header(Elements.UBIRCH_ID_HEADER).isDefined && request.header(Elements.UBIRCH_PASSWORD_HEADER).isDefined
+
+    def default(): Unit = {
+      if (!message.isSameUuid(request.getHeader(Elements.UBIRCH_ID_HEADER))) {
+        logger.warn(s"""{"WARN": "UUIDs in header and payload different"}""")
+        halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, Elements.MESSAGE_ERROR_DIFFERENT_UUID))
+      }
     }
+
+    def ubirchToken(): Unit = {
+      if (!BearerAuthRequest.deviceIdVerification(request, UUID.fromString(message.uuid)).get) {
+        logger.warn(s"""{"WARN": "UUIDs in header and payload different"}""")
+        halt(Elements.NOT_AUTHORIZED_CODE, createServerError(Elements.AUTHENTICATION_ERROR_NAME, Elements.MESSAGE_ERROR_DIFFERENT_UUID))
+      }
+    }
+
+    if (isCredentialsBasedAuth) default() else ubirchToken()
+
   }
 
   private def getPayload: String = {

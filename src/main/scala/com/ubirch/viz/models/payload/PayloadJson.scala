@@ -2,7 +2,7 @@ package com.ubirch.viz.models.payload
 
 import com.typesafe.scalalogging.LazyLogging
 import com.ubirch.viz.models.message.{ Message, MessageTypeZero }
-import com.ubirch.viz.Util.TimeUtil
+import com.ubirch.viz.util.TimeUtil
 import org.joda.time.DateTime
 import org.json4s.{ DefaultFormats, JValue }
 import org.json4s.JsonAST.JLong

@@ -66,6 +66,31 @@ class ApiRestSpecAuthOk extends FeatureSpec with Matchers with ScalatraSuite wit
           body shouldBe s"""{"error":{"error type":"Authentication","message":"${Elements.MESSAGE_ERROR_DIFFERENT_UUID}"}}"""
         }
     }
+
+    scenario("send stuff not same uuid json - ubirch token-") {
+      val payload = s"""{"uuid": "$defaultUUID", "timestamp": 1569844780, "data": {"AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+      post(
+        uri = "/authOk/json",
+        body = payload.getBytes(),
+        headers = Map(Elements.AUTHENTICATION_HEADER -> "bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJodHRwczovL3Rva2VuLmRldi51YmlyY2guY29tIiwic3ViIjoiOTYzOTk1ZWQtY2UxMi00ZWE1LTg5ZGMtYjE4MTcwMWQxZDdiIiwiYXVkIjoiaHR0cHM6Ly9kYXRhLmRldi51YmlyY2guY29tIiwiaWF0IjoxNjI2MTgzNTAwLCJqdGkiOiIyZjZkYjlmNy1jZWE2LTQzMGItYTA4My02NWNiYmI5MTUwZDMiLCJzY3AiOlsidGhpbmc6c3RvcmVkYXRhIl0sInB1ciI6Ik1vb2QgTGFib3JhdG9yaWVzIiwidGdwIjpbIktpdGNoZW5fQ2FybG9zIl0sInRpZCI6WyJiMGMwY2NjOC1kMjliLTRjNTEtYjk2MC0xNDYyODBiNWJmM2YiXSwib3JkIjpbXX0.HJlkymIj2BRaLK6e3Nes0gvgmpWp10BIVUMoP8mBtdy2d6RaqmrVzb5GJQjdz6Udu-QaHaLob4JJA1K8CwBeCQ")
+      ) {
+          status shouldBe 401
+          body shouldBe s"""{"error":{"error type":"Authentication","message":"${Elements.MESSAGE_ERROR_DIFFERENT_UUID}"}}"""
+        }
+    }
+
+    scenario("send stuff uuid - ubirch token-") {
+      val payload = s"""{"uuid": "b0c0ccc8-d29b-4c51-b960-146280b5bf3f", "timestamp": 1569844780, "data": {"AccZ": 1.017822, "H": 62.32504, "AccPitch": -0.5838608, "L_red": 97, "L_blue": 64, "T": 30.0, "V": 4.772007, "AccX": -0.02722168, "P": 99.75, "AccRoll": 1.532012, "AccY": 0.01037598}, "msg_type": 0}"""
+      post(
+        uri = "/authOk/json",
+        body = payload.getBytes(),
+        headers = Map(Elements.AUTHENTICATION_HEADER -> "bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzI1NiJ9.eyJpc3MiOiJodHRwczovL3Rva2VuLmRldi51YmlyY2guY29tIiwic3ViIjoiOTYzOTk1ZWQtY2UxMi00ZWE1LTg5ZGMtYjE4MTcwMWQxZDdiIiwiYXVkIjoiaHR0cHM6Ly9kYXRhLmRldi51YmlyY2guY29tIiwiaWF0IjoxNjI2MTgzNTAwLCJqdGkiOiIyZjZkYjlmNy1jZWE2LTQzMGItYTA4My02NWNiYmI5MTUwZDMiLCJzY3AiOlsidGhpbmc6c3RvcmVkYXRhIl0sInB1ciI6Ik1vb2QgTGFib3JhdG9yaWVzIiwidGdwIjpbIktpdGNoZW5fQ2FybG9zIl0sInRpZCI6WyJiMGMwY2NjOC1kMjliLTRjNTEtYjk2MC0xNDYyODBiNWJmM2YiXSwib3JkIjpbXX0.HJlkymIj2BRaLK6e3Nes0gvgmpWp10BIVUMoP8mBtdy2d6RaqmrVzb5GJQjdz6Udu-QaHaLob4JJA1K8CwBeCQ")
+      ) {
+          status shouldBe 200
+          body shouldBe ""
+        }
+    }
+
     stop()
   }
 
