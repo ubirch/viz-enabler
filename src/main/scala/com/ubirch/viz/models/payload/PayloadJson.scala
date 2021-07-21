@@ -1,12 +1,15 @@
 package com.ubirch.viz.models.payload
 
 import com.typesafe.scalalogging.LazyLogging
-import com.ubirch.viz.models.message.{ Message, MessageTypeZero }
+import com.ubirch.viz.models.Elements
+import com.ubirch.viz.models.message.{ Message, MessageTypeOne, MessageTypeZero }
 import com.ubirch.viz.util.TimeUtil
 import org.joda.time.DateTime
 import org.json4s.{ DefaultFormats, JValue }
 import org.json4s.JsonAST.JLong
 import org.json4s.jackson.JsonMethods.parse
+
+import scala.util.Try
 
 class PayloadJson(payload: String) extends Payload with LazyLogging {
 
@@ -14,7 +17,12 @@ class PayloadJson(payload: String) extends Payload with LazyLogging {
 
   def toMessage: Message = {
     val parsedMessage: JValue = parseMessage
-    parsedMessage.extract[MessageTypeZero]
+    val msgType = Try((parsedMessage \ "msg_type").extract[Int]).getOrElse(throw new IllegalArgumentException("msg_type field not found"))
+    msgType match {
+      case Elements.MESSAGE_TYPE_0 => parsedMessage.extract[MessageTypeZero]
+      case Elements.MESSAGE_TYPE_1 => parsedMessage.extract[MessageTypeOne]
+      case _ => throw new IllegalArgumentException("Unexpected message type")
+    }
   }
 
   private def parseMessage: JValue = {
