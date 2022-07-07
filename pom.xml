@@ -91,7 +91,7 @@
         <scalactic.version>3.0.5</scalactic.version>
         <scalatraSwagger.version>2.6.5</scalatraSwagger.version>
 
-        <jetty.version>9.4.45.v20220203</jetty.version>
+        <jetty.version>10.0.10</jetty.version>
 
         <!-- Json -->
         <json4s.version>3.6.9</json4s.version> <!-- Scalatra DOES NOT work with a json4s prior to 3.6.7 -->
