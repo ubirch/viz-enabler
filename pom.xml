@@ -6,7 +6,7 @@
     <!-- info -->
     <groupId>com.ubirch.viz</groupId>
     <artifactId>viz-enabler</artifactId>
-    <version>0.1.1</version>
+    <version>0.1.2</version>
     <packaging>jar</packaging>
 
     <organization>
@@ -56,7 +56,6 @@
         </repository>
     </repositories>
 
-
     <properties>
         <build.number>${timestamp}-dev</build.number>
 
@@ -64,14 +63,12 @@
         <timestamp>${maven.build.timestamp}</timestamp>
         <maven.build.timestamp.format>yyyyMMddHHmm</maven.build.timestamp.format>
 
-
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
 
         <encoding>UTF-8</encoding>
-
 
         <!-- versions -->
 
@@ -82,7 +79,6 @@
         <scala.compat.version>2.12</scala.compat.version>
         <scala-maven-plugin.version>3.4.2</scala-maven-plugin.version>
         <maven-jar-plugin.version>2.6</maven-jar-plugin.version>
-
 
         <typesafe.config.version>1.3.4</typesafe.config.version>
 
@@ -100,17 +96,17 @@
         <scala.logging.version>3.9.0</scala.logging.version>
         <scala-logging.version>3.9.2</scala-logging.version>
         <slf4j.api.version>1.7.15</slf4j.api.version>
-        <logback-classic.version>1.2.3</logback-classic.version>
+        <logback-classic.version>1.2.9</logback-classic.version>
         <log4j-over-slf4j.version>1.7.25</log4j-over-slf4j.version>
         <jcl-over-slf4j.version>1.7.25</jcl-over-slf4j.version>
         <logstash-logback-encoder.version>5.3</logstash-logback-encoder.version>
 
         <!-- Testing -->
         <scalatest.version>2.6.5</scalatest.version>
-        <testcontainer.version>1.15.3</testcontainer.version>
+        <testcontainer.version>1.18.3</testcontainer.version>
 
         <!-- Elasticsearch -->
-        <elasticsearch.version>7.9.1</elasticsearch.version>
+        <elasticsearch.version>8.8.2</elasticsearch.version>
 
         <!-- plugins -->
         <maven-dependency-plugin.version>2.8</maven-dependency-plugin.version>
@@ -125,8 +121,6 @@
         <guice.version>4.1.0</guice.version>
 
     </properties>
-
-
 
     <dependencies>
 
@@ -149,7 +143,6 @@
         </dependency>
 
         <!-- Scala -->
-
 
         <!-- Logging -->
         <dependency>
@@ -307,6 +300,20 @@
             <version>${elasticsearch.version}</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/com.sksamuel.elastic4s/elastic4s-json-jackson -->
+        <dependency>
+            <groupId>com.sksamuel.elastic4s</groupId>
+            <artifactId>elastic4s-json-jackson_2.12</artifactId>
+            <version>${elasticsearch.version}</version>
+        </dependency>
+
+        <!-- Needed otherwise it creates incompatibility between jackson versions being used -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.14.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>elasticsearch</artifactId>
@@ -314,27 +321,10 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/com.sksamuel.elastic4s/elastic4s-json4s -->
-<!--        <dependency>-->
-<!--            <groupId>com.sksamuel.elastic4s</groupId>-->
-<!--            <artifactId>elastic4s-json4s_2.12</artifactId>-->
-<!--            <version>7.8.1</version>-->
-<!--        </dependency>-->
-
-        <!-- Needed otherwise it creates incompatibility between jackson versions being used -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>2.11.1</version>
-        </dependency>
-
     </dependencies>
-
-
 
     <build>
         <plugins>
-
 
             <!-- scala compiler -->
             <plugin>
@@ -447,7 +437,6 @@
                 </executions>
             </plugin>
 
-
             <plugin>
                 <groupId>org.scalastyle</groupId>
                 <artifactId>scalastyle-maven-plugin</artifactId>
@@ -475,7 +464,6 @@
                     <outputEncoding>UTF-8</outputEncoding>
                 </configuration>
             </plugin>
-
 
             <!-- code formatting -->
             <plugin>
@@ -583,8 +571,6 @@
 
         </plugins>
 
-
     </build>
-
 
 </project>
