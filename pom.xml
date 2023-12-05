@@ -96,7 +96,7 @@
         <scala.logging.version>3.9.0</scala.logging.version>
         <scala-logging.version>3.9.2</scala-logging.version>
         <slf4j.api.version>1.7.15</slf4j.api.version>
-        <logback-classic.version>1.2.9</logback-classic.version>
+        <logback-classic.version>1.2.13</logback-classic.version>
         <log4j-over-slf4j.version>1.7.25</log4j-over-slf4j.version>
         <jcl-over-slf4j.version>1.7.25</jcl-over-slf4j.version>
         <logstash-logback-encoder.version>5.3</logstash-logback-encoder.version>
